@@ -21,7 +21,7 @@ export function OrderConfirmationPage() {
           );
           setLastOrder(response.data.order);
           clearCart();
-          localStorage.removeItem("lastOrderId"); // Clear it after use
+          localStorage.removeItem("lastOrderId");
         } catch (error) {
           console.error("Failed to fetch last order:", error);
         } finally {
@@ -37,7 +37,7 @@ export function OrderConfirmationPage() {
   if (loading) {
     return <div className="text-center py-20">⏳ Loading order details...</div>;
   }
-  console.log(lastOrder)
+
 
   if (!lastOrder) {
     return (

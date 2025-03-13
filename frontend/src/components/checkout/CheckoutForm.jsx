@@ -19,8 +19,7 @@ export const CheckoutForm = ({ loading }) => {
     updateAddress,
     deleteAddress,
     addresses,
-    lastOrder,
-    setLastOrder,
+    
   } = useContext(ShopContext);
 
   const [address, setAddress] = useState({

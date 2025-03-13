@@ -18,7 +18,7 @@ export const createCheckoutSession=async(req,res)=>{
                     currency:"usd",
                     product_data:{
                         name:product_name,
-                        images:[product.picture],
+                        images:[product.image],
                     },
                     unit_amount:amount
                 }
@@ -71,7 +71,7 @@ export const createCheckoutSession=async(req,res)=>{
 
 export const checkoutSuccess=async(req,res)=>{
     try {
-        const {session_id}=req.query;
+        const {session_id}=req.body;
         const session=await stripe.checkout.sessions.retrieve(session_id);
     if(session.payment_status==="paid"){
         if(session.metadata.couponCode){
@@ -87,7 +87,7 @@ export const checkoutSuccess=async(req,res)=>{
             price:p.price,
         })),
         totalAmount:session.amount_total/100,
-        stripeSessionId:session.id
+        stripeSessionId:session_id
     })
 
     await newOrder.save();

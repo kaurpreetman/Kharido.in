@@ -86,7 +86,7 @@ export const CheckoutPage = () => {
         case 'stripe':
           response = await axios.post('http://localhost:5000/api/orders/stripe', order, authHeader);
           const stripe = await loadStripe('pk_test_51QXe1dKyzyrm8ods7sdlcAVHULekjEx3E9yarZTqSAhJ7KLmiA6AR7DUasY4jSVzm5yuAcDl58QBURibaCr9iLYp00Qmmmjtjx'); // ← replace with your Stripe publishable key
-          setLastOrder(response.data.order);
+         
           await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
           return; // stop further code
         case 'cash_on_delivery':
