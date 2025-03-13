@@ -1,0 +1,17 @@
+import express from 'express';
+import { createProduct, getAllProducts,featuredProducts ,deleteProduct,recommended,getProductCategory,singleProduct} from '../controllers/products.controller.js';
+import { adminRoute ,protectRoute} from '../middleware/auth.middleware.js';
+import upload from '../middleware/multer.js';
+const router = express.Router();
+
+
+router.post('/create',upload.fields([{name:'image1',maxCount:1},{name:'image2',maxCount:1},{name:'image3',maxCount:1},{name:'image4',maxCount:1}]), createProduct);
+
+router.post('/getsingle', singleProduct);
+router.get('/all', getAllProducts);
+router.get('/featured',protectRoute, featuredProducts);
+router.get('/recomm',recommended);
+router.get('/category/:category',getProductCategory);
+router.delete("/:id",protectRoute,adminRoute,deleteProduct);
+
+export default router;
