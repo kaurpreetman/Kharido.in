@@ -1,7 +1,10 @@
 import Order from "../models/order.model.js";
 import Stripe from "stripe";
+import dotenv from 'dotenv';
 import Razorpay from "razorpay";
 import User from "../models/user.model.js";
+dotenv.config();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
