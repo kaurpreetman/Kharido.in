@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 import { ShopContext } from '../context/ShopContext';
+import React, { useContext, useEffect, useState } from 'react';
 
 export const HomePage = () => {
   const { products } = useContext(ShopContext);
