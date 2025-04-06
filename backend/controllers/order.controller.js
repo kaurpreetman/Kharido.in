@@ -9,10 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
 
-// const razorpay = new Razorpay({
-//     key_id: process.env.RAZORPAY_KEY_ID,
-//     key_secret: process.env.RAZORPAY_KEY_SECRET,
-// });
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // Place Order (COD & Bank Transfer)
 const placeOrder = async (req, res) => {
@@ -147,36 +147,36 @@ const verifyStripe=async(req,res)=>{
 
 // Place Order with Razorpay
 const placeOrderRazorpay = async (req, res) => {
-    // try {
-    //     const { user, products, totalAmount, address } = req.body;
+    try {
+        const { user, products, totalAmount, address } = req.body;
 
-    //     if (!user || !products.length || !totalAmount || !address) {
-    //         return res.status(400).json({ message: "All fields are required" });
-    //     }
+        if (!user || !products.length || !totalAmount || !address) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
 
-    //     const options = {
-    //         amount: totalAmount * 100, // Convert to paise
-    //         currency: "INR",
-    //         receipt: `order_${Date.now()}`,
-    //     };
+        const options = {
+            amount: totalAmount * 100, // Convert to paise
+            currency: "INR",
+            receipt: `order_${Date.now()}`,
+        };
 
-    //     const order = await razorpay.orders.create(options);
+        const order = await razorpay.orders.create(options);
 
-    //     const newOrder = new Order({
-    //         user,
-    //         products,
-    //         totalAmount,
-    //         address,
-    //         paymentMethod: "razorpay",
-    //         paymentStatus: "pending",
-    //         status: "pending",
-    //     });
+        const newOrder = new Order({
+            user,
+            products,
+            totalAmount,
+            address,
+            paymentMethod: "razorpay",
+            paymentStatus: "pending",
+            status: "pending",
+        });
 
-    //     await newOrder.save();
-    //     res.status(201).json({ orderId: order.id, order: newOrder });
-    // } catch (error) {
-    //     res.status(500).json({ message: "Razorpay payment failed", error: error.message });
-    // }
+        await newOrder.save();
+        res.status(201).json({ orderId: order.id, order: newOrder });
+    } catch (error) {
+        res.status(500).json({ message: "Razorpay payment failed", error: error.message });
+    }
 };
 
 // Get all orders for Admin

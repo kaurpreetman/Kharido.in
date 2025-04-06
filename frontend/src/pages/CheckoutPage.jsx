@@ -32,6 +32,18 @@ export const CheckoutPage = () => {
     headers: { Authorization: `Bearer ${token}` },
   };
 
+  const initpay=(order)=>{
+    const options={
+        key:import.meta.env.RAZORPAY_KEY_ID,
+        amount:order.amount,
+        currency:order.currency,
+        name:'Order Payment',
+        description:'Order Payment',
+        order_id:order._id,
+        receipt:order.receipt,
+        
+    }
+  }
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error('📍 Please select a shipping address.');
