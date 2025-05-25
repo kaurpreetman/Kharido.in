@@ -53,6 +53,7 @@ export function LoginPage() {
       setLoading(true);
 
       const response = await axios.post('http://localhost:5000/api/auth/login', data, { withCredentials: true });
+      console.log("data-"+response.data.user + " token "+response.data.token)
       login(response.data.user, response.data.token);
       toast.success(response.data.message || 'Login successful!');
       window.location.href = from;

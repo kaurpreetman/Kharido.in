@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProduct, getAllProducts,featuredProducts ,deleteProduct,recommended,getProductCategory,singleProduct} from '../controllers/products.controller.js';
+import { createProduct,addReview, getAllProducts,featuredProducts ,deleteProduct,recommended,getProductCategory,singleProduct} from '../controllers/products.controller.js';
 import { adminRoute ,protectRoute} from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.js';
 const router = express.Router();
@@ -13,5 +13,6 @@ router.get('/featured',protectRoute, featuredProducts);
 router.get('/recomm',recommended);
 router.get('/category/:category',getProductCategory);
 router.delete("/:id",protectRoute,adminRoute,deleteProduct);
+router.post('/:id/reviews',protectRoute, addReview);
 
 export default router;

@@ -183,3 +183,42 @@ async function updateFeaturedProductsCache() {
     }
     
 }
+
+export const addReview = async (req, res) => {
+  const { rating, comment } = req.body;
+  const productId = req.params.id;
+  const user = req.user; // assuming auth middleware
+
+  try {
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const alreadyReviewed = product.reviews.find(r => r.user.toString() === user._id.toString());
+    if (alreadyReviewed) return res.status(400).json({ message: 'You already reviewed this product' });
+
+    const review = {
+      user: user._id,
+      name: user.name,
+      rating: Number(rating),
+      comment
+    };
+
+    product.reviews.push(review);
+
+    product.averageRating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+
+    await product.save();
+
+    res.status(201).json({
+  message: 'Review added',
+  product: {
+    reviews: product.reviews,
+    averageRating: product.averageRating,
+  }
+});
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
