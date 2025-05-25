@@ -77,7 +77,7 @@ function App() {
           <Route
             path="login"
             element={
-              <GoogleOAuthProvider clientId=''>
+              <GoogleOAuthProvider clientId='889165511247-v2r6frdj65fhfabrjh5r71e5ngstmjhl.apps.googleusercontent.com'>
                 <LoginPage />
               </GoogleOAuthProvider>
             }

@@ -144,39 +144,72 @@ const verifyStripe=async(req,res)=>{
     res.json({success:false,message:error.message})
   }
 }
+import crypto from "crypto";
+
+const verifyRazorpay = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId } = req.body;
+
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign)
+      .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      await Order.findByIdAndUpdate(orderId, {
+        paymentStatus: "paid",
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+      });
+
+      await User.findByIdAndUpdate(userId, { cartItems: {} });
+
+      res.status(200).json({ success: true, message: "Payment verified successfully" });
+    } else {
+      await Order.findByIdAndUpdate(orderId, { paymentStatus: "failed" });
+      res.status(400).json({ success: false, message: "Payment verification failed" });
+    }
+  } catch (error) {
+    console.error("Razorpay verification error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // Place Order with Razorpay
 const placeOrderRazorpay = async (req, res) => {
-    try {
-        const { user, products, totalAmount, address } = req.body;
+  try {
+    const { user, products, totalAmount, address } = req.body;
 
-        if (!user || !products.length || !totalAmount || !address) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const options = {
-            amount: totalAmount * 100, // Convert to paise
-            currency: "INR",
-            receipt: `order_${Date.now()}`,
-        };
-
-        const order = await razorpay.orders.create(options);
-
-        const newOrder = new Order({
-            user,
-            products,
-            totalAmount,
-            address,
-            paymentMethod: "razorpay",
-            paymentStatus: "pending",
-            status: "pending",
-        });
-
-        await newOrder.save();
-        res.status(201).json({ orderId: order.id, order: newOrder });
-    } catch (error) {
-        res.status(500).json({ message: "Razorpay payment failed", error: error.message });
+    if (!user || !products.length || !totalAmount || !address) {
+      return res.status(400).json({ message: "All fields are required" });
     }
+
+    const options = {
+      amount: totalAmount * 100, // Convert to paise
+      currency: "INR",
+      receipt: `order_rcptid_${Date.now()}`,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    const newOrder = new Order({
+      user,
+      products,
+      totalAmount,
+      address,
+      paymentMethod: "razorpay",
+      paymentStatus: "pending",
+      status: "pending",
+      razorpayOrderId: razorpayOrder.id, // Optional: helpful for tracking
+    });
+
+    await newOrder.save();
+
+    res.status(201).json({ orderId: razorpayOrder.id, order: newOrder });
+  } catch (error) {
+    res.status(500).json({ message: "Razorpay payment failed", error: error.message });
+  }
 };
 
 // Get all orders for Admin
@@ -237,7 +270,7 @@ export {
   allOrders,
   userOrders,
   updateStatus,
-  verifyStripe
-
+  verifyStripe,
+  verifyRazorpay,
 };
 

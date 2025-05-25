@@ -32,18 +32,45 @@ export const CheckoutPage = () => {
     headers: { Authorization: `Bearer ${token}` },
   };
 
-  const initpay=(order)=>{
-    const options={
-        key:import.meta.env.RAZORPAY_KEY_ID,
-        amount:order.amount,
-        currency:order.currency,
-        name:'Order Payment',
-        description:'Order Payment',
-        order_id:order._id,
-        receipt:order.receipt,
-        
-    }
-  }
+  const initRazorpay = (order, orderData) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'Order Payment',
+      description: 'Order Payment',
+      order_id: order.id,
+      handler: async function (response) {
+        try {
+          await axios.post('http://localhost:5000/api/orders/verifyRazorpay', {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            orderId: orderData._id,
+            userId: user._id
+          }, authHeader);
+
+          toast.success('🎉 Payment successful and verified!');
+          clearCart();
+          setLastOrder(orderData);
+          navigate('/order-success');
+        } catch (error) {
+          toast.error('❌ Payment verification failed.');
+        }
+      },
+      prefill: {
+        name: user?.name || '',
+        email: user?.email || '',
+      },
+      theme: {
+        color: '#3399cc',
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error('📍 Please select a shipping address.');
@@ -90,17 +117,17 @@ export const CheckoutPage = () => {
     try {
       setLoading(true);
       let response;
-    
+
       switch (paymentMethod) {
         case 'razorpay':
           response = await axios.post('http://localhost:5000/api/orders/razorpay', order, authHeader);
-          break;
+          initRazorpay(response.data, response.data.order);
+          return;
         case 'stripe':
           response = await axios.post('http://localhost:5000/api/orders/stripe', order, authHeader);
-          const stripe = await loadStripe('pk_test_51QXe1dKyzyrm8ods7sdlcAVHULekjEx3E9yarZTqSAhJ7KLmiA6AR7DUasY4jSVzm5yuAcDl58QBURibaCr9iLYp00Qmmmjtjx'); // ← replace with your Stripe publishable key
-         
+          const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
           await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
-          return; // stop further code
+          return;
         case 'cash_on_delivery':
           response = await axios.post('http://localhost:5000/api/orders/cod', order, authHeader);
           break;
@@ -108,24 +135,21 @@ export const CheckoutPage = () => {
           toast.error('⚠️ Unsupported payment method selected.');
           return;
       }
-    
+
       toast.success('🎉 Order placed successfully!');
       clearCart();
       setLastOrder(response.data.order);
       navigate('/order-success');
     } catch (error) {
-      console.error('Order Error:', error);
       toast.error('❌ Failed to place order.');
     } finally {
       setLoading(false);
     }
-    
   };
 
   return (
     <div className="container mx-auto py-8 px-4 lg:px-8">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">🛒 Checkout</h1>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <div className="bg-white shadow-md rounded-lg p-6">
