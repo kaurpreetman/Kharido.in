@@ -9,12 +9,13 @@ import {
 } from "lucide-react";
 import { SearchBar } from "../ui/SearchBar";
 import { ShopContext } from "../../context/ShopContext.jsx";
+import { toast } from "react-toastify";
 
 export const Header = () => {
   const { totalCount } = useContext(ShopContext);
 
-  const isAdmin = true;
-  const user = false;
+ const { user, logout } = useContext(ShopContext);
+const isAdmin = user?.isAdmin || false;
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -36,18 +37,38 @@ export const Header = () => {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-5">
-          <Link to="/products" className="hover:text-blue-600 transition-colors">
-            🧾 Products
-          </Link>
+          {user ? (
+  <Link to="/products" className="hover:text-blue-600 transition-colors">
+    🧾 Products
+  </Link>
+) : (
+  <span
+    onClick={() => toast.info("Please login to view products")}
+    className="hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
+  >
+    🧾 Products
+  </span>
+)}
 
-          <Link to="/cart" className="relative hover:text-blue-600 transition-colors">
-            <ShoppingCart />
-            {totalCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
-                {totalCount}
-              </span>
-            )}
-          </Link>
+
+          {user ? (
+  <Link to="/cart" className="relative hover:text-blue-600 transition-colors">
+    <ShoppingCart />
+    {totalCount > 0 && (
+      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+        {totalCount}
+      </span>
+    )}
+  </Link>
+) : (
+  <span
+    onClick={() => toast.info("Please login to access your cart")}
+    className="relative hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
+  >
+    <ShoppingCart />
+  </span>
+)}
+
 
           {isAdmin && (
             <Link
@@ -61,7 +82,8 @@ export const Header = () => {
 
           {user ? (
             <button
-              onClick={() => console.log("Logout")}
+             onClick={logout}
+
               className="flex items-center gap-1 text-white bg-blue-600 px-3 py-1.5 rounded-md hover:bg-blue-700"
             >
               <LogOut size={16} />
@@ -92,18 +114,39 @@ export const Header = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white shadow-lg px-6 pb-6 space-y-4">
           <SearchBar />
-          <Link to="/products" className="block hover:text-blue-600">🧾 Products</Link>
-          <Link to="/cart" className="block hover:text-blue-600 flex items-center gap-2">
-            🛒 Cart ({totalCount})
-          </Link>
+          {user ? (
+  <Link to="/products" className="block hover:text-blue-600">🧾 Products</Link>
+) : (
+  <span
+    onClick={() => toast.info("Please login to view products")}
+    className="block text-gray-400 cursor-not-allowed"
+  >
+    🧾 Products
+  </span>
+)}
+
+{user ? (
+  <Link to="/cart" className="block hover:text-blue-600 flex items-center gap-2">
+    🛒 Cart ({totalCount})
+  </Link>
+) : (
+  <span
+    onClick={() => toast.info("Please login to access your cart")}
+    className="block text-gray-400 cursor-not-allowed"
+  >
+    🛒 Cart
+  </span>
+)}
+
           {isAdmin && (
             <Link to="/admin" className="block hover:text-blue-600 flex items-center gap-2">
-              🔐 Dashboard
+               Dashboard
             </Link>
           )}
           {user ? (
             <button
-              onClick={() => console.log("Logout")}
+              onClick={logout}
+
               className="block w-full text-left bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               🚪 Logout

@@ -1,35 +1,28 @@
 import User from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 
-// Generate only Access Token
 const generateAccessToken = (userID) => {
-  return jwt.sign({ userID }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: '1h',
-  });
+  return jwt.sign({ userID }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 };
 
-// Optionally set token in cookies (you can also just send it in response)
 const setAccessTokenCookie = (res, accessToken) => {
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 60 * 60 * 1000, // 1 hour
+    maxAge: 60 * 60 * 1000,
   });
 };
 
 export const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required.' });
     }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Email is already in use.' });
-    }
+    if (existingUser) return res.status(409).json({ message: 'Email already in use.' });
 
     const newUser = new User({ name, email, password });
     const savedUser = await newUser.save();
@@ -38,14 +31,9 @@ export const signup = async (req, res) => {
     setAccessTokenCookie(res, accessToken);
 
     const { password: _, ...userWithoutPassword } = savedUser.toObject();
-
-    res.status(201).json({
-      message: 'User registered successfully.',
-      user: userWithoutPassword,
-      accessToken, // Include if frontend stores it in localStorage
-    });
+    res.status(201).json({ message: 'User registered successfully.', user: userWithoutPassword, token: accessToken });
   } catch (error) {
-    console.error('Error during signup:', error);
+    console.error('Signup error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
@@ -53,28 +41,20 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
-    }
+    if (!email || !password) return res.status(400).json({ message: 'Email and password are required.' });
 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+      return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
     const accessToken = generateAccessToken(user._id);
     setAccessTokenCookie(res, accessToken);
 
     const { password: _, ...userWithoutPassword } = user.toObject();
-
-    res.status(200).json({
-      message: 'Logged in successfully.',
-      user: userWithoutPassword,
-      accessToken, // Send token for frontend use
-    });
+    res.status(200).json({ message: 'Logged in successfully.', user: userWithoutPassword, token: accessToken });
   } catch (error) {
-    console.error('Error during login:', error);
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
@@ -84,36 +64,45 @@ export const logout = async (req, res) => {
     res.clearCookie('accessToken');
     res.status(200).json({ message: 'Logged out successfully.' });
   } catch (error) {
-    console.error('Error during logout:', error);
     res.status(500).json({ message: error.message });
-  }
-};
-
-export const adminLogin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const accessToken = generateAccessToken('admin');
-      setAccessTokenCookie(res, accessToken);
-
-      return res.status(200).json({
-        message: 'Admin logged in successfully.',
-        accessToken,
-      });
-    }
-
-    return res.status(401).json({ message: 'Invalid email or password.' });
-  } catch (error) {
-    console.error('Error during admin login:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
 export const getProfile = async (req, res) => {
   try {
-    res.json(req.user); // You must have auth middleware that sets req.user
+    res.json(req.user); // req.user is set by auth middleware
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+import { OAuth2Client } from 'google-auth-library';
+import axios from 'axios';
+
+export const googleSignup = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Get user info from Google
+    const googleRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { email, name, sub: googleId } = googleRes.data;
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({ name, email, googleId });
+    }
+
+    const authToken = generateAccessToken(user._id);
+    setAccessTokenCookie(res, authToken);
+
+    res.status(200).json({ message: 'Google login successful.', user, token: authToken });
+  } catch (err) {
+    console.error('Google Sign-In error:', err);
+    res.status(401).json({ message: 'Unauthorized - Invalid token' });
   }
 };

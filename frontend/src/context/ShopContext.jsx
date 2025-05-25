@@ -2,9 +2,12 @@ import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+// Create context
 export const ShopContext = createContext();
 
+// Provider component
 const ShopContextProvider = ({ children }) => {
+  // States
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
   const [user, setUser] = useState(() => {
@@ -15,9 +18,13 @@ const ShopContextProvider = ({ children }) => {
   const [subtotal, setSubtotal] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [lastOrder, setLastOrder] = useState(null);
+
   const delivery_fee = 10.0;
   const currency = "$";
 
+  // Address states
   const [addresses, setAddresses] = useState(() => {
     const saved = localStorage.getItem("addresses");
     return saved ? JSON.parse(saved) : [];
@@ -27,32 +34,6 @@ const ShopContextProvider = ({ children }) => {
     const saved = localStorage.getItem("selectedAddress");
     return saved ? JSON.parse(saved) : null;
   });
-// Inside ShopContextProvider
-const addAddress = (newAddress) => {
-  const updated = [...addresses, newAddress];
-  setAddresses(updated);
-  localStorage.setItem("addresses", JSON.stringify(updated));
-};
-
-const updateAddress = (index, updatedAddress) => {
-  const updated = [...addresses];
-  updated[index] = updatedAddress;
-  setAddresses(updated);
-  localStorage.setItem("addresses", JSON.stringify(updated));
-};
-
-const deleteAddress = (index) => {
-  const updated = addresses.filter((_, i) => i !== index);
-  setAddresses(updated);
-  localStorage.setItem("addresses", JSON.stringify(updated));
-};
-
-const selectAddress = (addr) => {
-  setSelectedAddress(addr);
-  localStorage.setItem("selectedAddress", JSON.stringify(addr));
-};
-
-  const [search, setSearch] = useState("");
 
   axios.defaults.withCredentials = true;
 
@@ -88,12 +69,12 @@ const selectAddress = (addr) => {
     }
   };
 
-  // 🔁 Sync cart when user logs in
+  // Sync cart when user logs in
   useEffect(() => {
     if (user) fetchCart();
   }, [user]);
 
-  // 🔢 Auto-calculate totals
+  // 🔢 Calculate totals
   useEffect(() => {
     let newSubtotal = 0;
     let newTotalCount = 0;
@@ -153,14 +134,12 @@ const selectAddress = (addr) => {
     }
   };
 
-  const removeItem = async (productId,size) => {
+  const removeItem = async (productId, size) => {
     try {
       await axios.delete("http://localhost:5000/api/cart/remove", {
         data: { productId, size },
       });
-
-     
-     await fetchCart();
+      await fetchCart();
       toast.success("Item removed");
     } catch (err) {
       console.error("Error removing item", err);
@@ -178,8 +157,8 @@ const selectAddress = (addr) => {
       toast.error("Failed to clear cart");
     }
   };
-  const [lastOrder, setLastOrder] = useState(null);
 
+  // 📦 Products
   const getSingleProduct = async (productId) => {
     try {
       const response = await axios.post('http://localhost:5000/api/products/getsingle', {
@@ -191,8 +170,8 @@ const selectAddress = (addr) => {
       return null;
     }
   };
-  
-  
+
+  // 📦 Orders
   const getUserOrders = async (userId) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/orders/${userId}`);
@@ -203,7 +182,31 @@ const selectAddress = (addr) => {
     }
   };
 
-  
+  // 📍 Address Management
+  const addAddress = (newAddress) => {
+    const updated = [...addresses, newAddress];
+    setAddresses(updated);
+    localStorage.setItem("addresses", JSON.stringify(updated));
+  };
+
+  const updateAddress = (index, updatedAddress) => {
+    const updated = [...addresses];
+    updated[index] = updatedAddress;
+    setAddresses(updated);
+    localStorage.setItem("addresses", JSON.stringify(updated));
+  };
+
+  const deleteAddress = (index) => {
+    const updated = addresses.filter((_, i) => i !== index);
+    setAddresses(updated);
+    localStorage.setItem("addresses", JSON.stringify(updated));
+  };
+
+  const selectAddress = (addr) => {
+    setSelectedAddress(addr);
+    localStorage.setItem("selectedAddress", JSON.stringify(addr));
+  };
+
   return (
     <ShopContext.Provider
       value={{
@@ -214,6 +217,7 @@ const selectAddress = (addr) => {
         updateQuantity,
         removeItem,
         clearCart,
+        fetchCart,
         user,
         login,
         logout,
@@ -221,6 +225,10 @@ const selectAddress = (addr) => {
         setAddresses,
         selectedAddress,
         setSelectedAddress,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        selectAddress,
         subtotal,
         totalCount,
         total,
@@ -228,22 +236,14 @@ const selectAddress = (addr) => {
         currency,
         search,
         setSearch,
-        fetchCart,
-
-        addAddress,
-        updateAddress,
-        deleteAddress,
-        selectAddress,
         lastOrder,
         setLastOrder,
-
         getUserOrders,
       }}
     >
       {children}
     </ShopContext.Provider>
   );
-  
 };
 
 export default ShopContextProvider;

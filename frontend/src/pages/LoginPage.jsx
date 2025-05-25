@@ -1,4 +1,4 @@
-import React, { useState,useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-toastify';
@@ -23,32 +23,26 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const responseGoogle = async (response) => {
-    try {
-      if (response.error) {
-        toast.error('Google Sign-In failed');
-        return;
+ const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const accessToken = tokenResponse.access_token;
+
+        const res = await axios.post('http://localhost:5000/api/auth/google-signup', {
+          token: accessToken,
+        }, { withCredentials: true });
+
+        login(res.data.user, res.data.token);
+        toast.success('Logged in with Google!');
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Google login error:', err);
+        toast.error(err.response?.data?.message || 'Google login failed');
       }
-
-      // send response.code to backend and receive token
-      toast.success('Google Sign-In successful');
-    } catch (error) {
-      toast.error('An error occurred during Google Sign-In');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = useGoogleLogin({
-    onSuccess: (response) => {
-      setGoogleLoading(true);
-      responseGoogle(response);
     },
-    onError: (response) => {
-      setGoogleLoading(false);
-      responseGoogle(response);
-    },
-    flow: 'auth-code',
+    onError: () => toast.error('Google Sign-In failed'),
+    flow: 'implicit',
+    redirect_uri: 'http://localhost:5713',
   });
 
   const handleSubmit = async (e) => {
@@ -58,12 +52,8 @@ export function LoginPage() {
       setErrors({});
       setLoading(true);
 
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email: data.email,
-        password: data.password,
-      });
-      console.log(response);
-      login(response.data.user,response.data.accessToken); // 🔥 update context
+      const response = await axios.post('http://localhost:5000/api/auth/login', data, { withCredentials: true });
+      login(response.data.user, response.data.token);
       toast.success(response.data.message || 'Login successful!');
       window.location.href = from;
     } catch (error) {
@@ -79,7 +69,6 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
-  
   };
 
   return (
@@ -99,12 +88,11 @@ export function LoginPage() {
             </Link>
           </p>
         </div>
+
+        {/* Regular Login Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
               <input
                 id="email"
                 name="email"
@@ -115,17 +103,12 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 placeholder="Email address"
               />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
               <input
                 id="password"
                 name="password"
@@ -136,85 +119,56 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 placeholder="Password"
               />
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-900"
-              >
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Forgot your password?
-              </a>
-            </div>
+            <label className="flex items-center text-sm">
+              <input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" />
+              Remember me
+            </label>
+            <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
+              Forgot your password?
+            </a>
           </div>
 
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <Loader className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-5 w-5" aria-hidden="true" />
-                  Sign in
-                </>
-              )}
+              {loading ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <UserPlus className="h-5 w-5 mr-2" />}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
 
         {/* Divider */}
-        <div className="relative">
+        <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">Or</span>
+            <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
           </div>
         </div>
 
-        {/* Google Sign-In Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading}
-          className="group relative w-full flex items-center justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+        {/* Google Sign In Button */}
+         <button
+          onClick={() => googleLogin()}
+          className="w-full py-2 flex items-center justify-center gap-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100"
         >
           <img
-            src="/assets/image8-2.webp"
-            alt="Google logo"
-            className="h-5 w-5 mr-2"
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google"
+            className="w-5 h-5"
           />
-          {googleLoading ? 'Signing in...' : 'Sign in with Google'}
+          <span className="text-sm font-medium text-gray-700">Sign up with Google</span>
         </button>
       </div>
     </div>

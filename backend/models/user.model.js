@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt'; // Library for hashing passwords
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,8 +16,13 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: function () {
+        return !this.googleId; // Only require password if it's not a Google user
+      },
       minlength: [6, 'Password must be at least 6 characters long'],
+    },
+    googleId: {
+      type: String, // Added to identify Google sign-in users
     },
     cartItems: [
       {
@@ -30,7 +35,7 @@ const userSchema = new mongoose.Schema(
           ref: 'Product',
         },
         size: {
-          type: String, 
+          type: String,
           required: true,
         },
       },
@@ -40,40 +45,37 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'admin'],
       default: 'customer',
     },
-    
     orders: [
       {
-        
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'Order',
         },
       },
     ],
-
-  }
+  },
+  { timestamps: true }
 );
 
+// Hash password before saving
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
 
-
-userSchema.pre("save",async function (next){
-    if(!this.isModified('password')){
-        return next();
-    }
-    try{
-       const salt=await bcrypt.genSalt(10);
-       this.password=await bcrypt.hash(this.password,salt);
-       next();
-
-    }catch(error){
-        next(error);
-    }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-userSchema.methods.comparePassword= async function(password){
-    return bcrypt.compare(password,this.password);
-}
+// Password comparison method
+userSchema.methods.comparePassword = async function (password) {
+  return bcrypt.compare(password, this.password);
+};
 
 const User = mongoose.model('User', userSchema);
-
 export default User;
