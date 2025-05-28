@@ -52,7 +52,13 @@ export const login = async (req, res) => {
     setAccessTokenCookie(res, accessToken);
 
     const { password: _, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ message: 'Logged in successfully.', user: userWithoutPassword, token: accessToken });
+    res.status(200).json({
+  success: true, 
+  message: 'Logged in successfully.',
+  user: userWithoutPassword,
+  token: accessToken
+});
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
