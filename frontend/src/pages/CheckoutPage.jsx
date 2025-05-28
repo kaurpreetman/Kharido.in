@@ -34,7 +34,7 @@ export const CheckoutPage = () => {
 
   const initRazorpay = (order, orderData) => {
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      key: '',
       amount: order.amount,
       currency: order.currency,
       name: 'Order Payment',
@@ -125,7 +125,7 @@ export const CheckoutPage = () => {
           return;
         case 'stripe':
           response = await axios.post('http://localhost:5000/api/orders/stripe', order, authHeader);
-          const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+          const stripe = await loadStripe(import.meta.env.STRIPE_SECRET_KEY);
           await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
           return;
         case 'cash_on_delivery':
