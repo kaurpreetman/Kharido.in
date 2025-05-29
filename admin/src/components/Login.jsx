@@ -12,7 +12,7 @@ const Login = ({ setToken }) => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${backendUrl}/api/auth/login`, {
+      const response = await axios.post(`${backendUrl}/api/auth/adlogin`, {
         email,
         password
       });

@@ -112,3 +112,34 @@ export const googleSignup = async (req, res) => {
     res.status(401).json({ message: 'Unauthorized - Invalid token' });
   }
 };
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password)
+      return res.status(400).json({ message: 'Email and password are required.' });
+
+    const user = await User.findOne({ email });
+
+    if (!user || user.role !== 'admin')
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials.' });
+
+    const accessToken = generateAccessToken(user._id);
+    setAccessTokenCookie(res, accessToken);
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin logged in successfully.',
+      user: userWithoutPassword,
+      token: accessToken,
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
