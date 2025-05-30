@@ -7,7 +7,8 @@ import {
   placeOrderRazorpay,
   allOrders,
   userOrders,
-  updateStatus
+  updateStatus,
+  returnOrder
 } from '../controllers/order.controller.js';
 
 import { protectRoute } from "../middleware/auth.middleware.js";
@@ -36,5 +37,9 @@ router.get('/:id', protectRoute, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+router.post('/return/:orderId', protectRoute, returnOrder);
+
+
 
 export default router;

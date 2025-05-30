@@ -36,6 +36,17 @@ const ShopContextProvider = ({ children }) => {
   });
 
   axios.defaults.withCredentials = true;
+  // ✅ Automatically attach token to all requests
+  axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+  );
 
   // 📦 Fetch Products
   useEffect(() => {
@@ -95,18 +106,32 @@ const ShopContextProvider = ({ children }) => {
   }, [cartItems, products]);
 
   // 🔐 Auth
+  // const login = (userData) => {
+  //   setUser(userData);
+  //   localStorage.setItem("user", JSON.stringify(userData));
+  //   toast.success("Logged in successfully!");
+  // };
+
+  // const logout = () => {
+  //   setUser(null);
+  //   setCartItems({});
+  //   localStorage.removeItem("user");
+  //   toast.info("Logged out!");
+  // };
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", userData.token); // 🔐 Save token!
     toast.success("Logged in successfully!");
   };
-
   const logout = () => {
     setUser(null);
     setCartItems({});
     localStorage.removeItem("user");
+    localStorage.removeItem("token"); // 🔐 Clear token!
     toast.info("Logged out!");
   };
+    
 
   // ➕ Cart Actions
   const addToCart = async (productId, size) => {
@@ -172,12 +197,26 @@ const ShopContextProvider = ({ children }) => {
   };
 
   // 📦 Orders
+  // const getUserOrders = async (userId) => {
+  //   try {
+  //     const response = await axios.get(`http://localhost:5000/api/orders/${userId}`);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error fetching user orders:', error);
+  //     throw error;
+  //   }
+  // };
   const getUserOrders = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/orders/${userId}`);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`http://localhost:5000/api/orders/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response.data;
     } catch (error) {
-      console.error('Error fetching user orders:', error);
+      console.error("Error fetching user orders:", error.response?.data || error.message);
       throw error;
     }
   };

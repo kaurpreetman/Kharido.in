@@ -70,7 +70,16 @@ const orderSchema = new mongoose.Schema(
         
             sparse: true, 
             default: null,
-          }
+        },
+        // ✅ New fields for return logic
+        deliveredAt: {
+           type: Date,
+           default: null,
+        },
+        isReturned: {
+          type: Boolean,
+          default: false,
+        },
 
     },
     {

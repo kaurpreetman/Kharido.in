@@ -6,43 +6,85 @@ export const ProfilePage = () => {
   const { user, getUserOrders, getSingleProduct } = useContext(ShopContext);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-
+  
   useEffect(() => {
     const fetchOrdersWithProducts = async () => {
       try {
         const rawOrders = await getUserOrders(user._id);
-
+        console.log("✅ Raw Orders:", rawOrders);
+  
         const enrichedOrders = await Promise.all(
           rawOrders.map(async (order) => {
             const enrichedProducts = await Promise.all(
               order.products.map(async (item) => {
                 const productDetails = await getSingleProduct(item.product);
+                console.log("🔍 Product Details:", productDetails);
                 return {
                   ...item,
                   productDetails,
                 };
               })
             );
-
+  
             return {
               ...order,
               products: enrichedProducts,
             };
           })
         );
-
+  
+        console.log("🎯 Enriched Orders:", enrichedOrders);
         setOrders(enrichedOrders);
       } catch (error) {
+        console.error("❌ Error fetching orders:", error);
         toast.error('❌ Failed to load orders');
       } finally {
         setOrdersLoading(false);
       }
     };
-
+  
     if (user?._id) {
       fetchOrdersWithProducts();
     }
   }, [getUserOrders, getSingleProduct, user]);
+  
+
+  // useEffect(() => {
+  //   const fetchOrdersWithProducts = async () => {
+  //     try {
+  //       const rawOrders = await getUserOrders(user._id);
+
+  //       const enrichedOrders = await Promise.all(
+  //         rawOrders.map(async (order) => {
+  //           const enrichedProducts = await Promise.all(
+  //             order.products.map(async (item) => {
+  //               const productDetails = await getSingleProduct(item.product);
+  //               return {
+  //                 ...item,
+  //                 productDetails,
+  //               };
+  //             })
+  //           );
+
+  //           return {
+  //             ...order,
+  //             products: enrichedProducts,
+  //           };
+  //         })
+  //       );
+
+  //       setOrders(enrichedOrders);
+  //     } catch (error) {
+  //       toast.error('❌ Failed to load orders');
+  //     } finally {
+  //       setOrdersLoading(false);
+  //     }
+  //   };
+
+  //   if (user?._id) {
+  //     fetchOrdersWithProducts();
+  //   }
+  // }, [getUserOrders, getSingleProduct, user]);
 
   const getPaymentLabel = (method) => {
     switch (method) {
@@ -78,10 +120,20 @@ console.log("orders getting"+orders);
           <p>No orders found 🫤</p>
         ) : (
             <div className="space-y-6">
+               {/* {orders.flatMap((order) =>
+              order.products.map((item, index) => {
+                const product = item.productDetails;
+                if (!product) return null; */}
             {orders.flatMap((order) =>
               order.products.map((item, index) => {
                 const product = item.productDetails;
                 if (!product) return null;
+
+                // Check if return allowed: delivered status + within 7 days of delivery
+                const canReturn =
+                  order.status === 'delivered' &&
+                  order.deliveredAt &&
+                  (new Date() - new Date(order.deliveredAt)) / (1000 * 60 * 60 * 24) <= 7;
           
                 return (
                   <div
@@ -117,6 +169,16 @@ console.log("orders getting"+orders);
                       <p><span className="font-medium">Payment:</span> {getPaymentLabel(order.paymentMethod)} <span className="text-xs text-gray-500">({order.paymentStatus})</span></p>
                       <p><span className="font-medium">Status:</span> {order.status}</p>
                       <p><span className="font-medium">Ordered on:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
+
+                      Return button
+                      {canReturn && (
+                        <button
+                          onClick={() => handleReturn(order._id, item.product)}
+                          className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          Return
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

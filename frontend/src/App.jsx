@@ -15,6 +15,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import  ProtectedRoute  from './components/utils/ProtectedRoute';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { ShopContext } from './context/ShopContext.jsx';
+import FAQ from './pages/FAQ.jsx'
 
 function App() {
   const { user } = React.useContext(ShopContext);
@@ -83,6 +84,7 @@ function App() {
             }
           />
           <Route path="signup" element={<RegisterPage />} />
+          <Route path="faq" element={<FAQ/>} />
         </Route>
       </Routes>
     </div>

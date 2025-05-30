@@ -225,41 +225,131 @@ const allOrders = async (req, res) => {
 };
 
 // Get user orders for frontend
+// const userOrders = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const orders = await Order.find({ user: userId })
+//       .sort({ createdAt: -1 });
+
+//     if (!orders.length) {
+//       return res.status(404).json({ message: "No orders found for this user" });
+//     }
+
+//     res.status(200).json(orders);
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
+
+// Update Order Status (Admin)
+// const updateStatus = async (req, res) => {
+//     // try {
+//     //     const { status } = req.body;
+//     //     const { orderId } = req.params;
+
+//     //     const order = await Order.findById(orderId);
+//     //     if (!order) {
+//     //         return res.status(404).json({ message: "Order not found" });
+//     //     }
+
+//     //     order.status = status;
+//     //     await order.save();
+
+//     //     res.status(200).json({ message: "Order status updated successfully", order });
+//     // } catch (error) {
+//     //     res.status(500).json({ message: "Server error", error: error.message });
+//     // }
+// };
 const userOrders = async (req, res) => {
   try {
     const { userId } = req.params;
+
     const orders = await Order.find({ user: userId })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate("products.product", "name price") // for product details
+      .lean(); // convert Mongoose docs to plain JS objects
+
+    const updatedOrders = orders.map(order => {
+      const isDelivered = order.status === "delivered";
+      let returnEligible = false;
+
+      if (isDelivered && order.deliveredAt) {
+        const now = new Date();
+        const deliveredDate = new Date(order.deliveredAt);
+        const diffInDays = (now - deliveredDate) / (1000 * 60 * 60 * 24);
+        returnEligible = diffInDays <= 7;
+      }
+
+      return {
+        ...order,
+        returnEligible,
+      };
+    });
+    //console.log("userOrders route hit for user:", userId);
 
     if (!orders.length) {
       return res.status(404).json({ message: "No orders found for this user" });
     }
 
-    res.status(200).json(orders);
+    res.status(200).json(updatedOrders);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+const returnOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
 
+    const order = await Order.findById(orderId);
 
-// Update Order Status (Admin)
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== "delivered" || order.isReturned) {
+      return res.status(400).json({ message: "Order is not eligible for return" });
+    }
+
+    const now = new Date();
+    const deliveredDate = new Date(order.deliveredAt);
+    const diffInDays = (now - deliveredDate) / (1000 * 60 * 60 * 24);
+
+    if (diffInDays > 7) {
+      return res.status(400).json({ message: "Return period expired (7 days)" });
+    }
+
+    order.isReturned = true;
+    order.status = "cancelled"; // Or you can use a custom status like "returned"
+    await order.save();
+
+    res.status(200).json({ message: "Order returned successfully", order });
+  } catch (error) {
+    res.status(500).json({ message: "Return failed", error: error.message });
+  }
+};
 const updateStatus = async (req, res) => {
-    // try {
-    //     const { status } = req.body;
-    //     const { orderId } = req.params;
+  try {
+    const { status } = req.body;
+    const { orderId } = req.params;
 
-    //     const order = await Order.findById(orderId);
-    //     if (!order) {
-    //         return res.status(404).json({ message: "Order not found" });
-    //     }
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
-    //     order.status = status;
-    //     await order.save();
+    order.status = status;
 
-    //     res.status(200).json({ message: "Order status updated successfully", order });
-    // } catch (error) {
-    //     res.status(500).json({ message: "Server error", error: error.message });
-    // }
+    if (status === "delivered") {
+      order.deliveredAt = new Date();
+    }
+
+    await order.save();
+
+    res.status(200).json({ message: "Order status updated successfully", order });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 
@@ -272,5 +362,6 @@ export {
   updateStatus,
   verifyStripe,
   verifyRazorpay,
+  returnOrder,
 };
 
