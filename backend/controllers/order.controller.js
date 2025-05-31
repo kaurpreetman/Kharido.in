@@ -1,54 +1,53 @@
-import Order from "../models/order.model.js";
-import Stripe from "stripe";
 import dotenv from 'dotenv';
-import Razorpay from "razorpay";
+import crypto from 'crypto';
+import Stripe from 'stripe';
+import Razorpay from 'razorpay';
+
+import Order from "../models/order.model.js";
+import Product from "../models/Product.model.js";
 import User from "../models/user.model.js";
+
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-
-
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 // Place Order (COD & Bank Transfer)
 const placeOrder = async (req, res) => {
-    try {
-      const { user, products, totalAmount, address, paymentMethod } = req.body;
-  
-      if (!user || !products.length || !totalAmount || !address || !paymentMethod) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
-  
-      const newOrder = new Order({
-        user,
-        products,
-        totalAmount,
-        address,
-        paymentMethod,
-        paymentStatus: paymentMethod === "cash_on_delivery" ? "pending" : "failed",
-        status: "pending",
-      });
-  
-      await newOrder.save();
-  
-      await User.findByIdAndUpdate(user, {
-        $push: { orders: { product: newOrder._id } }, // optional: adjust quantity if needed
-        $set: { cartItems: {} },
-      });
-  
-      res.status(201).json({ message: "Order placed successfully", order: newOrder });
-    } catch (error) {
-      res.status(500).json({ message: "Server error", error: error.message });
+  try {
+    const { user, products, totalAmount, address, paymentMethod } = req.body;
+
+    if (!user || !products.length || !totalAmount || !address || !paymentMethod) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-  };
-  
 
-  import Product from "../models/Product.model.js"; // adjust if your import path is different
+    const newOrder = new Order({
+      user,
+      products,
+      totalAmount,
+      address,
+      paymentMethod,
+      paymentStatus: paymentMethod === "cash_on_delivery" ? "pending" : "failed",
+      status: "pending",
+    });
 
+    await newOrder.save();
+
+    await User.findByIdAndUpdate(user, {
+      $push: { orders: { product: newOrder._id } },
+      $set: { cartItems: {} },
+    });
+
+    res.status(201).json({ message: "Order placed successfully", order: newOrder });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Place Order with Stripe
 const placeOrderStripe = async (req, res) => {
   try {
     const { user, products, totalAmount, address, paymentMethod } = req.body;
@@ -60,22 +59,6 @@ const placeOrderStripe = async (req, res) => {
     const deliveryCharge = 10; // ₹10
     const currency = "inr";
 
-    // Step 1: Fetch full product data from DB
-    
-
-    // Step 4: Create Order and save to DB
-    const newOrder = new Order({
-      user,
-      products,
-      totalAmount,
-      address,
-      paymentMethod: "stripe",
-      paymentStatus: "pending",
-      status: "pending",
-     
-    });
-
-    await newOrder.save();
     const enrichedProducts = await Promise.all(
       products.map(async (item) => {
         const productDoc = await Product.findById(item.product);
@@ -87,7 +70,6 @@ const placeOrderStripe = async (req, res) => {
       })
     );
 
-    // Step 2: Build line_items for Stripe
     const line_items = [
       ...enrichedProducts.map((item) => ({
         price_data: {
@@ -109,7 +91,18 @@ const placeOrderStripe = async (req, res) => {
       },
     ];
 
-    // Step 3: Create Stripe session
+    const newOrder = new Order({
+      user,
+      products,
+      totalAmount,
+      address,
+      paymentMethod: "stripe",
+      paymentStatus: "pending",
+      status: "pending",
+    });
+
+    await newOrder.save();
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,
@@ -125,27 +118,61 @@ const placeOrderStripe = async (req, res) => {
   }
 };
 
-const verifyStripe=async(req,res)=>{
-  const {orderId,success,userId}=req.body;
-  console.log("YESSSS");
-  try{
-    if(success==="true"){
-      await Order.findByIdAndUpdate(orderId,{paymentStatus:"paid" })
-      await User.findByIdAndUpdate(userId,{cartItems:{}});
-      res.json({success:true});
+// Verify Stripe Payment
+const verifyStripe = async (req, res) => {
+  const { orderId, success, userId } = req.body;
+  try {
+    if (success === "true") {
+      await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid" });
+      await User.findByIdAndUpdate(userId, { cartItems: {} });
+      res.json({ success: true });
+    } else {
+      await Order.findByIdAndDelete(orderId);
+      res.json({ success: false });
     }
-    else{
-      await Order.findByIdAndDelete(orderId,{paymentStatus:"failed"});
-      res.json({success:false});
-    }
-  }
-  catch(error){
+  } catch (error) {
     console.log(error);
-    res.json({success:false,message:error.message})
+    res.json({ success: false, message: error.message });
   }
-}
-import crypto from "crypto";
+};
 
+// Place Order with Razorpay
+const placeOrderRazorpay = async (req, res) => {
+  try {
+    const { user, products, totalAmount, address } = req.body;
+
+    if (!user || !products.length || !totalAmount || !address) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const options = {
+      amount: totalAmount * 100,
+      currency: "INR",
+      receipt: `order_rcptid_${Date.now()}`,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    const newOrder = new Order({
+      user,
+      products,
+      totalAmount,
+      address,
+      paymentMethod: "razorpay",
+      paymentStatus: "pending",
+      status: "pending",
+      razorpayOrderId: razorpayOrder.id,
+    });
+
+    await newOrder.save();
+
+    res.status(201).json({ orderId: razorpayOrder.id, order: newOrder });
+  } catch (error) {
+    res.status(500).json({ message: "Razorpay payment failed", error: error.message });
+  }
+};
+
+// Verify Razorpay Payment
 const verifyRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId } = req.body;
@@ -176,192 +203,85 @@ const verifyRazorpay = async (req, res) => {
   }
 };
 
-// Place Order with Razorpay
-const placeOrderRazorpay = async (req, res) => {
+// Get user orders
+const getUserOrders = async (req, res) => {
   try {
-    const { user, products, totalAmount, address } = req.body;
+   
+    const orders = await Order.find({ user: req.user._id }).populate("products.product");
 
-    if (!user || !products.length || !totalAmount || !address) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const options = {
-      amount: totalAmount * 100, // Convert to paise
-      currency: "INR",
-      receipt: `order_rcptid_${Date.now()}`,
-    };
-
-    const razorpayOrder = await razorpay.orders.create(options);
-
-    const newOrder = new Order({
-      user,
-      products,
-      totalAmount,
-      address,
-      paymentMethod: "razorpay",
-      paymentStatus: "pending",
-      status: "pending",
-      razorpayOrderId: razorpayOrder.id, // Optional: helpful for tracking
-    });
-
-    await newOrder.save();
-
-    res.status(201).json({ orderId: razorpayOrder.id, order: newOrder });
-  } catch (error) {
-    res.status(500).json({ message: "Razorpay payment failed", error: error.message });
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch orders" });
   }
 };
 
-// Get all orders for Admin
-const allOrders = async (req, res) => {
-    // try {
-    //     const orders = await Order.find()
-    //         .populate("user", "name email")
-    //         .populate("products.product", "name price");
-    //     res.status(200).json(orders);
-    // } catch (error) {
-    //     res.status(500).json({ message: "Server error", error: error.message });
-    // }
-};
-
-// Get user orders for frontend
-// const userOrders = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-//     const orders = await Order.find({ user: userId })
-//       .sort({ createdAt: -1 });
-
-//     if (!orders.length) {
-//       return res.status(404).json({ message: "No orders found for this user" });
-//     }
-
-//     res.status(200).json(orders);
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// };
-
-
-// Update Order Status (Admin)
-// const updateStatus = async (req, res) => {
-//     // try {
-//     //     const { status } = req.body;
-//     //     const { orderId } = req.params;
-
-//     //     const order = await Order.findById(orderId);
-//     //     if (!order) {
-//     //         return res.status(404).json({ message: "Order not found" });
-//     //     }
-
-//     //     order.status = status;
-//     //     await order.save();
-
-//     //     res.status(200).json({ message: "Order status updated successfully", order });
-//     // } catch (error) {
-//     //     res.status(500).json({ message: "Server error", error: error.message });
-//     // }
-// };
-const userOrders = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const orders = await Order.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .populate("products.product", "name price") // for product details
-      .lean(); // convert Mongoose docs to plain JS objects
-
-    const updatedOrders = orders.map(order => {
-      const isDelivered = order.status === "delivered";
-      let returnEligible = false;
-
-      if (isDelivered && order.deliveredAt) {
-        const now = new Date();
-        const deliveredDate = new Date(order.deliveredAt);
-        const diffInDays = (now - deliveredDate) / (1000 * 60 * 60 * 24);
-        returnEligible = diffInDays <= 7;
-      }
-
-      return {
-        ...order,
-        returnEligible,
-      };
-    });
-    //console.log("userOrders route hit for user:", userId);
-
-    if (!orders.length) {
-      return res.status(404).json({ message: "No orders found for this user" });
-    }
-
-    res.status(200).json(updatedOrders);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
+// Return order
 const returnOrder = async (req, res) => {
+  const { orderId } = req.body;
+
   try {
-    const { orderId } = req.params;
+    const order = await Order.findOne({ _id: orderId, user: req.user._id });
 
-    const order = await Order.findById(orderId);
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+    if (!order || order.isReturned) {
+      return res.status(404).json({ message: "Order not found or already returned" });
     }
 
-    if (order.status !== "delivered" || order.isReturned) {
-      return res.status(400).json({ message: "Order is not eligible for return" });
+    if (order.status !== "delivered" || !order.deliveredAt) {
+      return res.status(400).json({ message: "Order not delivered yet" });
     }
 
+    const deliveredAt = new Date(order.deliveredAt);
     const now = new Date();
-    const deliveredDate = new Date(order.deliveredAt);
-    const diffInDays = (now - deliveredDate) / (1000 * 60 * 60 * 24);
 
-    if (diffInDays > 7) {
-      return res.status(400).json({ message: "Return period expired (7 days)" });
+    if ((now - deliveredAt) / (1000 * 60 * 60 * 24) > 7) {
+      return res.status(400).json({ message: "Return window expired" });
     }
 
     order.isReturned = true;
-    order.status = "cancelled"; // Or you can use a custom status like "returned"
     await order.save();
 
-    res.status(200).json({ message: "Order returned successfully", order });
-  } catch (error) {
-    res.status(500).json({ message: "Return failed", error: error.message });
+    res.status(200).json({ message: "Product returned successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Return failed" });
   }
 };
-const updateStatus = async (req, res) => {
+
+// Cancel order
+const cancelOrder = async (req, res) => {
+  const { orderId } = req.body;
+
   try {
-    const { status } = req.body;
-    const { orderId } = req.params;
+    const order = await Order.findOne({ _id: orderId, user: req.user._id });
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+    if (!order || order.isCancelled) {
+      return res.status(404).json({ message: "Order not found or already cancelled" });
     }
 
-    order.status = status;
+    const orderDate = new Date(order.createdAt);
+    const now = new Date();
+    const diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
 
-    if (status === "delivered") {
-      order.deliveredAt = new Date();
+    if (["shipped", "delivered"].includes(order.status) || diffDays > 6) {
+      return res.status(400).json({ message: "Cannot cancel this order" });
     }
 
+    order.status = "cancelled";
+    order.isCancelled = true;
     await order.save();
 
-    res.status(200).json({ message: "Order status updated successfully", order });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(200).json({ message: "Order cancelled successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Cancellation failed" });
   }
 };
-
 
 export {
   placeOrder,
   placeOrderStripe,
   placeOrderRazorpay,
-  allOrders,
-  userOrders,
-  updateStatus,
+  getUserOrders,
+  returnOrder,
+  cancelOrder,
   verifyStripe,
   verifyRazorpay,
-  returnOrder,
 };
-

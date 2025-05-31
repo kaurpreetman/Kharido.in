@@ -1,11 +1,23 @@
-import { createContext, useEffect, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
 // Create context
 export const ShopContext = createContext();
 
-// Provider component
+// Setup Axios interceptor once (outside the provider component)
+axios.defaults.withCredentials = true;
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 const ShopContextProvider = ({ children }) => {
   // States
   const [products, setProducts] = useState([]);
@@ -35,20 +47,7 @@ const ShopContextProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  axios.defaults.withCredentials = true;
-  // ✅ Automatically attach token to all requests
-  axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-  );
-
-  // 📦 Fetch Products
+  // Fetch Products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -63,7 +62,7 @@ const ShopContextProvider = ({ children }) => {
     fetchProducts();
   }, []);
 
-  // 🛒 Fetch Cart
+  // Fetch Cart
   const fetchCart = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/cart");
@@ -85,7 +84,7 @@ const ShopContextProvider = ({ children }) => {
     if (user) fetchCart();
   }, [user]);
 
-  // 🔢 Calculate totals
+  // Calculate totals
   useEffect(() => {
     let newSubtotal = 0;
     let newTotalCount = 0;
@@ -105,35 +104,23 @@ const ShopContextProvider = ({ children }) => {
     setTotal(newSubtotal + delivery_fee);
   }, [cartItems, products]);
 
-  // 🔐 Auth
-  // const login = (userData) => {
-  //   setUser(userData);
-  //   localStorage.setItem("user", JSON.stringify(userData));
-  //   toast.success("Logged in successfully!");
-  // };
-
-  // const logout = () => {
-  //   setUser(null);
-  //   setCartItems({});
-  //   localStorage.removeItem("user");
-  //   toast.info("Logged out!");
-  // };
+  // Auth
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", userData.token); // 🔐 Save token!
+    localStorage.setItem("token", userData.token);
     toast.success("Logged in successfully!");
   };
+
   const logout = () => {
     setUser(null);
     setCartItems({});
     localStorage.removeItem("user");
-    localStorage.removeItem("token"); // 🔐 Clear token!
+    localStorage.removeItem("token");
     toast.info("Logged out!");
   };
-    
 
-  // ➕ Cart Actions
+  // Cart Actions
   const addToCart = async (productId, size) => {
     try {
       await axios.post("http://localhost:5000/api/cart/add", { productId, size });
@@ -183,45 +170,32 @@ const ShopContextProvider = ({ children }) => {
     }
   };
 
-  // 📦 Products
+  // Products
   const getSingleProduct = async (productId) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/products/getsingle', {
-        productId,
+      const res = await axios.post(`http://localhost:5000/api/products/getsingle`,{
+        productId
       });
-      return response.data.product;
+      return res.data.product;
     } catch (error) {
-      console.error('Error fetching product:', error);
+      console.error("Error fetching product:", error);
       return null;
     }
   };
 
-  // 📦 Orders
-  // const getUserOrders = async (userId) => {
-  //   try {
-  //     const response = await axios.get(`http://localhost:5000/api/orders/${userId}`);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Error fetching user orders:', error);
-  //     throw error;
-  //   }
-  // };
-  const getUserOrders = async (userId) => {
+  // Orders
+  const getUserOrders = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:5000/api/orders/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data;
+      const res = await axios.get("http://localhost:5000/api/orders/my-orders");
+      return res.data;
     } catch (error) {
-      console.error("Error fetching user orders:", error.response?.data || error.message);
-      throw error;
+      throw new Error(
+        error.response?.data?.message || error.message || "Failed to fetch orders"
+      );
     }
   };
 
-  // 📍 Address Management
+  // Address Management
   const addAddress = (newAddress) => {
     const updated = [...addresses, newAddress];
     setAddresses(updated);

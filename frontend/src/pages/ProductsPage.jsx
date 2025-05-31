@@ -1,3 +1,4 @@
+// ProductsPage.jsx
 import React, { useEffect, useState, useContext } from 'react';
 import { ShopContext } from '../context/ShopContext.jsx';
 import { ProductCard } from '../components/ui/ProductCard.jsx';
@@ -8,6 +9,16 @@ export const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortOrder, setSortOrder] = useState('relevant');
+
+  const categoriesWithSubcategories = {
+    All: [],
+    Electronics: ['📱 Mobiles', '💻 Laptops', '🔌 Accessories', '📟 Tablets', '📷 Cameras', '🎧 Audio & Headphones', '⌚ Wearable Tech'],
+    Fashion: ['👔 Men', '👗 Women', '🧒 Kids', '👟 Footwear', '⌚ Watches', '💍 Jewelry', '👜 Handbags & Wallets', '🎎 Ethnic Wear'],
+    'Home & Living': ['🛋️ Furniture', '🖼️ Decor', '🍳 Kitchen', '🛏️ Bedding', '💡 Lighting', '🧻 Bathroom Essentials', '📦 Storage & Organization', '🌱 Gardening'],
+    Sports: ['🏋️ Gym Equipment', '🥾 Outdoor Gear', '👕 Sportswear', '🚴 Cycling', '👟 Footwear', '🎽 Accessories'],
+    Beauty: ['🧴 Skincare', '💇‍♀️ Haircare', '💄 Makeup', '🌸 Fragrances', '🧼 Personal Care', '🖌️ Tools & Brushes'],
+    Books: ['📖 Fiction', '📚 Non-Fiction', '🦸 Comics', '👶 Children’s Books', '🎓 Educational', '📱 E-Books'],
+  };
 
   useEffect(() => {
     let filtered = products;
@@ -20,84 +31,28 @@ export const ProductsPage = () => {
       );
     }
 
-    if (sortOrder === 'low-high') {
-      filtered = [...filtered].sort((a, b) => a.price - b.price);
-    } else if (sortOrder === 'high-low') {
-      filtered = [...filtered].sort((a, b) => b.price - a.price);
+    if (search.trim()) {
+      const lower = search.toLowerCase();
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(lower) ||
+        product.description?.toLowerCase().includes(lower) ||
+        product.subcategory?.toLowerCase().includes(lower)
+      );
     }
 
-    if (search.trim()) {
-      filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(search.toLowerCase())
-      );
+    if (sortOrder === 'low-high') {
+      filtered = [...filtered].sort((a, b) => a.price - b.price || a.name.localeCompare(b.name));
+    } else if (sortOrder === 'high-low') {
+      filtered = [...filtered].sort((a, b) => b.price - a.price || a.name.localeCompare(b.name));
     }
 
     setFilteredProducts(filtered);
   }, [products, selectedCategory, selectedSubcategory, sortOrder, search]);
 
-  const categoriesWithSubcategories = {
-    All: [],
-    Electronics: [
-      '📱 Mobiles',
-      '💻 Laptops',
-      '🔌 Accessories',
-      '📟 Tablets',
-      '📷 Cameras',
-      '🎧 Audio & Headphones',
-      '⌚ Wearable Tech',
-    ],
-    Fashion: [
-      '👔 Men',
-      '👗 Women',
-      '🧒 Kids',
-      '👟 Footwear',
-      '⌚ Watches',
-      '💍 Jewelry',
-      '👜 Handbags & Wallets',
-      '🎎 Ethnic Wear',
-    ],
-    'Home & Living': [
-      '🛋️ Furniture',
-      '🖼️ Decor',
-      '🍳 Kitchen',
-      '🛏️ Bedding',
-      '💡 Lighting',
-      '🧻 Bathroom Essentials',
-      '📦 Storage & Organization',
-      '🌱 Gardening',
-    ],
-    Sports: [
-      '🏋️ Gym Equipment',
-      '🥾 Outdoor Gear',
-      '👕 Sportswear',
-      '🚴 Cycling',
-      '👟 Footwear',
-      '🎽 Accessories',
-    ],
-    Beauty: [
-      '🧴 Skincare',
-      '💇‍♀️ Haircare',
-      '💄 Makeup',
-      '🌸 Fragrances',
-      '🧼 Personal Care',
-      '🖌️ Tools & Brushes',
-    ],
-    Books: [
-      '📖 Fiction',
-      '📚 Non-Fiction',
-      '🦸 Comics',
-      '👶 Children’s Books',
-      '🎓 Educational',
-      '📱 E-Books',
-    ],
-  };
-
   return (
     <div className="container py-8">
       <div className="flex gap-8">
-        {/* Filters Sidebar */}
         <aside className="w-64 space-y-6">
-          {/* Categories Filter */}
           <div>
             <h3 className="text-lg font-semibold mb-3">📂 Categories</h3>
             <div className="space-y-2">
@@ -140,30 +95,29 @@ export const ProductsPage = () => {
             </div>
           </div>
 
-          {/* Price Range Filter */}
           <div>
             <h3 className="text-lg font-semibold mb-3">💰 Sort by Price</h3>
-            <div className="space-y-2">
-              <select
-                className="w-full px-3 py-2 border rounded-md"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-              >
-                <option value="relevant">✨ Sort by: Relevant</option>
-                <option value="low-high">⬇️ Price: Low to High</option>
-                <option value="high-low">⬆️ Price: High to Low</option>
-              </select>
-            </div>
+            <select
+              className="w-full px-3 py-2 border rounded-md"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
+              <option value="relevant">✨ Sort by: Relevant</option>
+              <option value="low-high">⬇️ Price: Low to High</option>
+              <option value="high-low">⬆️ Price: High to Low</option>
+            </select>
           </div>
         </aside>
 
-        {/* Products Grid */}
         <div className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-      <ProductCard key={product._id} product={product} />
-))}
-
+            {filteredProducts.length ? (
+              filteredProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+            ) : (
+              <p>No products found.</p>
+            )}
           </div>
         </div>
       </div>

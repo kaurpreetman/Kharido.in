@@ -1,104 +1,96 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ShopContext } from '../context/ShopContext.jsx';
-import { toast } from 'react-toastify';
-
+import React, { useContext, useEffect, useState } from "react";
+import { ShopContext } from "../context/ShopContext.jsx";
+import { toast } from "react-toastify";
+import axios from "axios"
 export const ProfilePage = () => {
   const { user, getUserOrders, getSingleProduct } = useContext(ShopContext);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchOrdersWithProducts = async () => {
-      try {
-        const rawOrders = await getUserOrders(user._id);
-        console.log("✅ Raw Orders:", rawOrders);
-  
-        const enrichedOrders = await Promise.all(
-          rawOrders.map(async (order) => {
-            const enrichedProducts = await Promise.all(
-              order.products.map(async (item) => {
-                const productDetails = await getSingleProduct(item.product);
-                console.log("🔍 Product Details:", productDetails);
-                return {
-                  ...item,
-                  productDetails,
-                };
-              })
-            );
-  
-            return {
-              ...order,
-              products: enrichedProducts,
-            };
-          })
-        );
-  
-        console.log("🎯 Enriched Orders:", enrichedOrders);
-        setOrders(enrichedOrders);
-      } catch (error) {
-        console.error("❌ Error fetching orders:", error);
-        toast.error('❌ Failed to load orders');
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
-  
-    if (user?._id) {
-      fetchOrdersWithProducts();
-    }
-  }, [getUserOrders, getSingleProduct, user]);
-  
+  const [processingOrderId, setProcessingOrderId] = useState(null);
 
-  // useEffect(() => {
-  //   const fetchOrdersWithProducts = async () => {
-  //     try {
-  //       const rawOrders = await getUserOrders(user._id);
-
-  //       const enrichedOrders = await Promise.all(
-  //         rawOrders.map(async (order) => {
-  //           const enrichedProducts = await Promise.all(
-  //             order.products.map(async (item) => {
-  //               const productDetails = await getSingleProduct(item.product);
-  //               return {
-  //                 ...item,
-  //                 productDetails,
-  //               };
-  //             })
-  //           );
-
-  //           return {
-  //             ...order,
-  //             products: enrichedProducts,
-  //           };
-  //         })
-  //       );
-
-  //       setOrders(enrichedOrders);
-  //     } catch (error) {
-  //       toast.error('❌ Failed to load orders');
-  //     } finally {
-  //       setOrdersLoading(false);
-  //     }
-  //   };
-
-  //   if (user?._id) {
-  //     fetchOrdersWithProducts();
-  //   }
-  // }, [getUserOrders, getSingleProduct, user]);
+  // Utility to calculate day difference
+  const daysBetween = (d1, d2) =>
+    Math.floor((new Date(d1) - new Date(d2)) / (1000 * 60 * 60 * 24));
 
   const getPaymentLabel = (method) => {
     switch (method) {
-      case 'cash_on_delivery':
-        return '💵 Cash on Delivery';
-      case 'stripe':
-        return '💳 Stripe';
-      case 'razorpay':
-        return '🏦 Razorpay';
+      case "cash_on_delivery":
+        return "💵 Cash on Delivery";
+      case "stripe":
+        return "💳 Stripe";
+      case "razorpay":
+        return "🏦 Razorpay";
       default:
-        return '💰 Unknown';
+        return "💰 Unknown";
     }
   };
-console.log("orders getting"+orders);
+
+  const fetchOrdersWithProducts = async () => {
+    try {
+      const rawOrders = await getUserOrders();
+      console.log("rawOrders:", rawOrders);
+      // No need to refetch product here if productDetails is populated by backend
+      const enrichedOrders = rawOrders.map((order) => ({
+        ...order,
+        products: order.products.map((item) => ({
+          ...item,
+          productDetails: item.product, // Already populated by backend/Mongoose
+        })),
+      }));
+      setOrders(enrichedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("❌ Failed to load orders");
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?._id) {
+      fetchOrdersWithProducts();
+    } else {
+      setOrders([]);
+      setOrdersLoading(false);
+    }
+  }, [user]);
+
+  const handleReturn = async (orderId) => {
+    try {
+      setProcessingOrderId(orderId);
+      await axios.post('http://localhost/5000/api/orders/cancel', { orderId });
+
+      toast.success("✅ Order returned successfully");
+      fetchOrdersWithProducts();
+    } catch (err) {
+      toast.error(`❌ ${err.response?.data?.message || err.message}`);
+    } finally {
+      setProcessingOrderId(null);
+    }
+  };
+
+  const handleCancel = async (orderId) => {
+    try {
+      setProcessingOrderId(orderId);
+      await axios.post('http://localhost:5000/api/orders/cancel', { orderId });
+
+      toast.success("🛑 Order cancelled");
+      fetchOrdersWithProducts();
+    } catch (err) {
+      toast.error(`❌ ${err.response?.data?.message || err.message}`);
+    } finally {
+      setProcessingOrderId(null);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="text-center mt-20 text-lg text-gray-600">
+        Please login to view your profile.
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto py-10 px-4 space-y-12">
       <h1 className="text-4xl font-bold text-center text-blue-700">👤 My Profile</h1>
@@ -106,8 +98,12 @@ console.log("orders getting"+orders);
       {/* User Info */}
       <div className="bg-white p-6 rounded-lg shadow space-y-2">
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">👥 User Info</h2>
-        <p><span className="font-medium text-gray-700">Full Name:</span> {user?.name}</p>
-        <p><span className="font-medium text-gray-700">Email:</span> {user?.email}</p>
+        <p>
+          <span className="font-medium text-gray-700">Full Name:</span> {user.name}
+        </p>
+        <p>
+          <span className="font-medium text-gray-700">Email:</span> {user.email}
+        </p>
       </div>
 
       {/* Order History */}
@@ -119,73 +115,81 @@ console.log("orders getting"+orders);
         ) : orders.length === 0 ? (
           <p>No orders found 🫤</p>
         ) : (
-            <div className="space-y-6">
-               {/* {orders.flatMap((order) =>
-              order.products.map((item, index) => {
-                const product = item.productDetails;
-                if (!product) return null; */}
-            {orders.flatMap((order) =>
-              order.products.map((item, index) => {
-                const product = item.productDetails;
-                if (!product) return null;
-
-                // Check if return allowed: delivered status + within 7 days of delivery
-                const canReturn =
-                  order.status === 'delivered' &&
-                  order.deliveredAt &&
-                  (new Date() - new Date(order.deliveredAt)) / (1000 * 60 * 60 * 24) <= 7;
-          
-                return (
-                  <div
-                    key={`${order._id}-${index}`}
-                    className="p-6 bg-white rounded-xl shadow-md border border-gray-200 flex flex-col md:flex-row justify-between items-start gap-6"
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <div key={order._id} className="border rounded p-4 shadow-sm">
+                <h3 className="font-semibold text-lg mb-2">
+                  Order ID: {order._id} | Status:{" "}
+                  <span
+                    className={`inline-block px-2 py-1 rounded ${
+                      order.status === "delivered"
+                        ? "bg-green-200 text-green-800"
+                        : order.status === "shipped"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
                   >
-                    {/* Left Side: Image + Product Info */}
-                    <div className="flex gap-4">
-                      {/* Product Image */}
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-28 h-28 object-cover rounded-md border"
-                        />
-                      ) : (
-                        <div className="w-28 h-28 bg-gray-100 flex items-center justify-center rounded-md text-gray-400 text-sm">
-                          No Image
-                        </div>
-                      )}
-          
-                      {/* Product Info */}
-                      <div className="space-y-1 text-gray-700 text-sm">
-                        <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                        <p><span className="font-medium">Price:</span> ₹{item.price.toFixed(2)}</p>
-                        <p><span className="font-medium">Quantity:</span> {item.quantity}</p>
-                        {item.size && <p><span className="font-medium">Size:</span> {item.size}</p>}
+                    {order.status}
+                  </span>
+                </h3>
+
+                <p className="mb-2">
+                  Payment Method: {getPaymentLabel(order.paymentMethod)}
+                </p>
+                <p className="mb-2">
+                  Total Price: ${order.totalPrice}
+                </p>
+
+                {/* Products */}
+                <div className="mb-2 space-y-1">
+                  {order.products.map((item, idx) => (
+                    <div key={idx} className="flex items-center space-x-4">
+                      <img
+                        src={item.productDetails.image}
+                        alt={item.productDetails.title}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                      <div>
+                        <p className="font-semibold">{item.productDetails.title}</p>
+                        <p>Size: {item.size}</p>
+                        <p>Quantity: {item.quantity}</p>
+                        <p>Price: ${item.productDetails.price.toFixed(2)}</p>
                       </div>
                     </div>
-          
-                    {/* Right Side: Order Info */}
-                    <div className="text-sm text-gray-700 space-y-1 text-right md:min-w-[200px]">
-                      <p><span className="font-medium">Payment:</span> {getPaymentLabel(order.paymentMethod)} <span className="text-xs text-gray-500">({order.paymentStatus})</span></p>
-                      <p><span className="font-medium">Status:</span> {order.status}</p>
-                      <p><span className="font-medium">Ordered on:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
+                  ))}
+                </div>
 
-                      Return button
-                      {canReturn && (
-                        <button
-                          onClick={() => handleReturn(order._id, item.product)}
-                          className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        >
-                          Return
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                {/* Actions */}
+                <div className="mt-3 space-x-3">
+                  {/* Return eligible if delivered and within 14 days */}
+                 
+                  {order.status === "delivered"  &&
+                    order.deliveredDate &&
+                    daysBetween(new Date(), new Date(order.deliveredDate)) <= 14 ? (
+                      <button
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                        onClick={() => handleReturn(order._id)}
+                        disabled={processingOrderId === order._id}
+                      >
+                        {processingOrderId === order._id ? "Processing..." : "Return"}
+                      </button>
+                    ) : null}
+
+
+                  {/* Cancel eligible if pending or shipped */}
+                  {(order.status === "pending" || order.status === "shipped") && (
+                    <button
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                      onClick={() => handleCancel(order._id)}
+                      disabled={processingOrderId === order._id}
+                    >
+                      {processingOrderId === order._id ? "Processing..." : "Cancel"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          
         )}
       </div>
     </div>

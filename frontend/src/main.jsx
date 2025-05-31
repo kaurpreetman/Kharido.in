@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')).render(
   <BrowserRouter>
   
   <ShopContextProvider>
-    <GoogleOAuthProvider clientId='889165511247-v2r6frdj65fhfabrjh5r71e5ngstmjhl.apps.googleusercontent.com'>
+    <GoogleOAuthProvider clientId=''>
   <App />
   </GoogleOAuthProvider>
   </ShopContextProvider>
