@@ -2,8 +2,13 @@ import { redis } from '../lib/redis.js';
 import Product from '../models/Product.model.js';
 import cloudinary from '../lib/cloudinary.js';
 
+
 export const createProduct = async (req, res) => {
     try {
+      console.log("add product body:", req.body); // ✅ FIXED
+console.log("uploaded files:", req.files); // helpful for debugging
+
+
       const { name, description, price, category, subCategory, sizes, bestseller, date } = req.body;
   
       if (!name || !price) {
@@ -11,17 +16,30 @@ export const createProduct = async (req, res) => {
       }
   
       const imageUrls = [];
-      const uploadImageToCloudinary = async (file) => {
-        return await cloudinary.uploader.upload(file.path, { folder: "products" });
-      };
-  
-      const imageKeys = ['image1', 'image2', 'image3', 'image4'];
-      for (const key of imageKeys) {
-        if (req.files[key]) {
-          const result = await uploadImageToCloudinary(req.files[key][0]);
-          imageUrls.push(result.secure_url);
-        }
+      const uploadImageToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { folder: "products" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
       }
+    ).end(fileBuffer);
+  });
+};
+ 
+
+
+      const imageKeys = ['image1', 'image2', 'image3', 'image4'];
+for (const key of imageKeys) {
+  if (req.files && req.files[key] && req.files[key][0]) {
+    const fileBuffer = req.files[key][0].buffer;
+    const result = await uploadImageToCloudinary(fileBuffer);
+    imageUrls.push(result.secure_url);
+  }
+}
+
+
 
       const newProduct = new Product({
         name,
@@ -32,7 +50,7 @@ export const createProduct = async (req, res) => {
         sizes:JSON.parse(sizes),
         bestseller: bestseller==="true"? true:false,
         date:Date.now(),
-        images: imageUrls,
+        image: imageUrls,
       });
   
       const savedProduct = await newProduct.save();

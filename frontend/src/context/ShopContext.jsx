@@ -52,6 +52,7 @@ const ShopContextProvider = ({ children }) => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/products/all");
+        console.log("products",res);
         setProducts(res.data.products);
       } catch (err) {
         console.error("Failed to fetch products", err);
