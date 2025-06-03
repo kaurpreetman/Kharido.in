@@ -1,7 +1,8 @@
 import React, { createContext, useEffect, useState } from "react";
 import axios from "axios";
+//import {products} from '../assets/assets';
 import { toast } from "react-toastify";
-
+import {useNavigate} from "react-router-dom";
 // Create context
 export const ShopContext = createContext();
 
@@ -35,7 +36,7 @@ const ShopContextProvider = ({ children }) => {
 
   const delivery_fee = 10.0;
   const currency = "$";
-
+  const backendurl=import.meta.env.REACT_APP_SERVER_URL
   // Address states
   const [addresses, setAddresses] = useState(() => {
     const saved = localStorage.getItem("addresses");
@@ -219,7 +220,28 @@ const ShopContextProvider = ({ children }) => {
     setSelectedAddress(addr);
     localStorage.setItem("selectedAddress", JSON.stringify(addr));
   };
+  const getProductData=async()=>{
+    try{
+       const response =await axios.get(backendurl+'/api/product/list')
+       //console.log(response.data);
+       if(response.data.success){
+        setProducts(response.data.products)
+       }
+       else{
+        toast.error(response.data.message);
+       }
+       
+    }
+    catch(error){
+      console.log(error);
+      toast.error(error.message);
+      
+    }
+  }
 
+  useEffect(()=>{
+    getProductData();
+  },[])
   return (
     <ShopContext.Provider
       value={{
@@ -252,6 +274,7 @@ const ShopContextProvider = ({ children }) => {
         lastOrder,
         setLastOrder,
         getUserOrders,
+        backendurl,
       }}
     >
       {children}
