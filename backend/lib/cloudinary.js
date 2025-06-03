@@ -5,9 +5,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 cloudinary.config({
-  cloud_name: 'dolset2wb',
-  api_key: '942762962647291',
-  api_secret: 'A017mx4WhZgHWcVWlkLEcb4dfuQ',
+  cloud_name: `${process.env.CLOUDINARY_CLOUD_NAME}`,
+  api_key: `${process.env.CLOUDINARY_API_KEY}`,
+api_secret: `${process.env.CLOUDINARY_API_SECRET}`,
 });
 
 console.log("✅ Cloudinary configured successfully.");
