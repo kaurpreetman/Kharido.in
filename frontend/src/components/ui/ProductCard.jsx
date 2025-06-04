@@ -12,10 +12,10 @@ export const ProductCard = ({ product }) => {
       {/* Link to Product Details */}
       <Link to={`/products/${product._id}`}>
         <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-48 object-cover"
-        />
+  src={product.image?.[0]} 
+  alt={product.name}
+  className="w-full h-48 object-cover"
+/>
       </Link>
       <div className="p-4">
         {/* Product Name */}
@@ -28,7 +28,9 @@ export const ProductCard = ({ product }) => {
         {/* Product Rating */}
         <div className="mt-2 flex items-center">
           <Star className="h-4 w-4 text-yellow-400 fill-current" />
-          <span className="ml-1 text-sm text-gray-600">{product.rating || "N/A"}</span>
+          <span className="ml-1 text-sm text-gray-600">{product.
+averageRating
+ || "N/A"}</span>
         </div>
         {/* Product Price and Add to Cart Button */}
         <div className="mt-2 flex items-center justify-between">

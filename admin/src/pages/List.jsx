@@ -13,6 +13,10 @@ const List = ({token}) => {
       const response= await axios.get(backendUrl+'/api/product/list')
       if(response.data.success){
         setList(response.data.products);
+        //console.log(response.data);
+        console.log("Fetched products:", response.data.products);
+
+        
       }
       else{
         toast.error(response.data.message)
@@ -37,6 +41,8 @@ const List = ({token}) => {
       }
 
     } catch (error) {
+      console.log(error);
+      toast.error(error.message);
       
     }
   }

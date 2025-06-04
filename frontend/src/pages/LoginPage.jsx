@@ -16,13 +16,13 @@ export function LoginPage() {
   const { login } = useContext(ShopContext); 
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
-
+  //const {toke,setToken,navigate,backendUrl}=useContext(ShopContext)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
+  //const [name,setName]=useState('');
  const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {

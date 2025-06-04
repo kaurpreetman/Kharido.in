@@ -27,7 +27,7 @@ export function ProductDetailsPage() {
     try {
       setLoading(true);
       const data = await getSingleProduct(id);
-      console.log(id)
+    
       console.log(data)
       if (data) {
         setProduct(data);

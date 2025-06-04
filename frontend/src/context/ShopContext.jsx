@@ -36,6 +36,7 @@ const ShopContextProvider = ({ children }) => {
 
   const delivery_fee = 10.0;
   const currency = "$";
+  const [token,setToken]=useState('');
   const backendurl=import.meta.env.REACT_APP_SERVER_URL
   // Address states
   const [addresses, setAddresses] = useState(() => {
@@ -53,6 +54,7 @@ const ShopContextProvider = ({ children }) => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/products/all");
+        console.log("products",res);
         setProducts(res.data.products);
       } catch (err) {
         console.error("Failed to fetch products", err);
@@ -275,6 +277,7 @@ const ShopContextProvider = ({ children }) => {
         setLastOrder,
         getUserOrders,
         backendurl,
+        
       }}
     >
       {children}
