@@ -1,0 +1,189 @@
+[33mcommit 78bcdf8776cf6a52b14b922424e0cc71c92a2eea[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu Jun 5 12:26:26 2025 +0530
+
+    Stop tracking .env file
+
+[33mcommit c5d4ccd099feec8c2b7965f9720afdac8f607fa2[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu Jun 5 12:25:12 2025 +0530
+
+    Stop tracking .env file
+
+[33mcommit 8f46857866bc76fb531b620be7cd42d74a4333cb[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Thu Jun 5 12:13:41 2025 +0530
+
+    bugs remove
+
+[33mcommit d4df28b6a10ed4181c57f93153de8e06f1716481[m
+Merge: 8f73fbe c58f95f
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Thu Jun 5 01:10:24 2025 +0530
+
+    order display at admin
+
+[33mcommit 8f73fbe6daabb42a13c4612bdaf4566296a64453[m
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Wed Jun 4 01:03:49 2025 +0530
+
+     Place order feature
+
+[33mcommit c58f95f0b97a578c9d1a93720a54f4e6e2b8a008[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Tue Jun 3 19:05:15 2025 +0530
+
+    credentials remove
+
+[33mcommit 14599d47d7aa4aee039e684202d2ff72ae07b837[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Tue Jun 3 18:51:49 2025 +0530
+
+    add product bugs resolved cloudinary setup
+
+[33mcommit 19e1a829c2b8e5579beff7356b7f56154633cf91[m
+Author: Kratika Singh <kratikaarun@gmail.com>
+Date:   Sat May 31 12:05:27 2025 +0530
+
+    Finalized backend API integration with admin panel
+
+[33mcommit 68d709e2896336caa29659e87e23d2c7e374cb6f[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Sat May 31 10:16:53 2025 +0530
+
+    order history and cancel and return ui buttons added
+
+[33mcommit eee40b820d91222e3ee618d1be433329267d4621[m
+Merge: 0ba8e1a 662a3fc
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Fri May 30 10:04:29 2025 +0530
+
+    Merge branch 'main' of https://github.com/kaurpreetman/ForEver
+
+[33mcommit 0ba8e1a5f8d0c8dc4c0bddff89d1bb0e5db9fbc9[m
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Fri May 30 10:04:15 2025 +0530
+
+    Order History
+
+[33mcommit 662a3fcb39508f2469ac77654de0aa0ccb99e220[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu May 29 08:59:10 2025 +0530
+
+    adminLogin controller implemented
+
+[33mcommit 4e493fe1e9a0ed90c91461909d883c762d79af4a[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu May 29 05:29:54 2025 +0530
+
+    admin login updated
+
+[33mcommit d894a079364da2feb84dd7fb89ea5cf97fa0ee64[m
+Merge: c0a36cd 49b4985
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu May 29 05:03:26 2025 +0530
+
+    Merge branch 'main' of https://github.com/kaurpreetman/ForEver
+
+[33mcommit c0a36cdd4225df56dc8a4ddd77fa955403221321[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu May 29 05:03:08 2025 +0530
+
+    changes
+
+[33mcommit 49b49852f7ec2aa64a247582967d670d3a800c20[m
+Author: Kratika Singh <kratikaarun@gmail.com>
+Date:   Wed May 28 22:12:22 2025 +0530
+
+    connected backend api with admin panel
+
+[33mcommit d1a566d83b9a90ba6a538b425c227b7a26a36001[m
+Author: Kratika Singh <kratikaarun@gmail.com>
+Date:   Wed May 28 08:02:49 2025 +0530
+
+    Admin Dashboard Done
+
+[33mcommit 972b734dbf639ca4e50d48c81a888782a9fc6769[m
+Author: shrashti-yadav <shrashtiyadav188@gmail.com>
+Date:   Tue May 27 02:22:23 2025 +0530
+
+    admin panel
+
+[33mcommit 2a65593c29db53f4bb3d6379c2390c86158bd902[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Mon May 26 03:09:25 2025 +0530
+
+    User Reviews and Rating system implemented
+
+[33mcommit 8b4a36bac7d7042074e57855a3fe7395bb6b9577[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Mon May 26 01:31:33 2025 +0530
+
+    Razorpay implementation
+
+[33mcommit b887b30b272e52c44fb78ca5d91d28903ce7a485[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Sun May 25 20:45:16 2025 +0530
+
+    Login and SignUp with GOOGLE
+
+[33mcommit 3fafdec7a7b541547bd7ad0ec0d7fd6f7c8fe3cd[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Sun May 25 20:23:00 2025 +0530
+
+    Remove .env from repository
+
+[33mcommit 3d96615f4c0fc14bf5814fddd5ea123042b4c830[m
+Author: Manpreet Kaur <154856820+kaurpreetman@users.noreply.github.com>
+Date:   Mon Apr 7 00:19:18 2025 +0530
+
+    Update .env
+
+[33mcommit b11feaabe16e04dcf48616a241249cdf089d4120[m[33m ([m[1;31morigin/admin-panel[m[33m)[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Mon Apr 7 00:07:19 2025 +0530
+
+    final changes in stripe razorpay
+
+[33mcommit 4d107d16d97afd19ab3b1540065e08b4d1cfe079[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Fri Mar 14 17:31:24 2025 +0530
+
+    remove credentials
+
+[33mcommit 681e6d852a34def4e1cda750cd60755b5c24f3d4[m
+Merge: 6c60e4b a7684b6
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Fri Mar 14 17:21:28 2025 +0530
+
+    Merge branch 'main' of https://github.com/kaurpreetman/ForEver
+
+[33mcommit 6c60e4bc80d2a3578347c1ecd6ba76a71be0e559[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Fri Mar 14 17:21:06 2025 +0530
+
+    checker
+
+[33mcommit a7684b6a648f6fdb05449b55611b14b61ec0e017[m
+Author: Shrashti-yadav <162615183+Shrashti-yadav@users.noreply.github.com>
+Date:   Fri Mar 14 15:20:57 2025 +0530
+
+    some changes done
+
+[33mcommit 49b645d18db6dcfbae5aeef5ba4a0bc017673e2a[m
+Author: Shrashti-yadav <162615183+Shrashti-yadav@users.noreply.github.com>
+Date:   Fri Mar 14 15:04:56 2025 +0530
+
+    resolve some errors
+
+[33mcommit af0bebccbc188044e61846e1e497caa509a561c7[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu Mar 13 22:03:31 2025 +0530
+
+    Initial commit with frontend and backend and payment gatway implementation  using stripe
+
+[33mcommit 1c5911c93765d77e7ba88d14fb25514bb91e0cc6[m
+Author: Manpreet Kaur <preetkaurpawar8@gmail.com>
+Date:   Thu Mar 13 21:15:26 2025 +0530
+
+     UI payment gateway for cod and stipe has been implemented
