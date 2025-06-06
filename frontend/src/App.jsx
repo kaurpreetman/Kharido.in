@@ -75,15 +75,15 @@ function App() {
           <Route path="order-success" element={<OrderConfirmationPage />} />
 
           {/* Public Routes */}
-          {/* <Route
+          <Route
             path="login"
             element={
               <GoogleOAuthProvider clientId=''>
                 <LoginPage />
               </GoogleOAuthProvider>
             }
-          /> */}
-          <Route path="login" element={<LoginPage />} />
+          />
+          {/* <Route path="login" element={<LoginPage />} /> */}
 
           <Route path="signup" element={<RegisterPage />} />
           <Route path="faq" element={<FAQ/>} />

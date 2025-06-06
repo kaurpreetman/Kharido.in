@@ -2,17 +2,16 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
-
 import Order from "../models/order.model.js";
 import Product from "../models/Product.model.js";
 import User from "../models/user.model.js";
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(`${process.env.STRIPE_SECRET_KEY}`);
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: `${process.env.RAZORPAY_KEY_ID}`,
+  key_secret: `${process.env.RAZORPAY_KEY_SECRET}`,
 });
 
 // Place Order (COD & Bank Transfer)
@@ -113,6 +112,7 @@ const placeOrderStripe = async (req, res) => {
 
     res.status(201).json({ sessionId: session.id, order: newOrder });
   } catch (error) {
+    console.log(error);
     console.error("Stripe order error:", error);
     res.status(500).json({ message: "Stripe payment failed", error: error.message });
   }
@@ -168,6 +168,7 @@ const placeOrderRazorpay = async (req, res) => {
 
     res.status(201).json({ orderId: razorpayOrder.id, order: newOrder });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Razorpay payment failed", error: error.message });
   }
 };
@@ -179,7 +180,7 @@ const verifyRazorpay = async (req, res) => {
 
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256",`${process.env.RAZORPAY_KEY_SECRET}`)
       .update(sign)
       .digest("hex");
 
@@ -198,17 +199,18 @@ const verifyRazorpay = async (req, res) => {
       res.status(400).json({ success: false, message: "Payment verification failed" });
     }
   } catch (error) {
+    console.log(error);
     console.error("Razorpay verification error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get user orders
 const getUserOrders = async (req, res) => {
   try {
-   
-    const orders = await Order.find({ user: req.user._id }).populate("products.product");
-
+    const orders = await Order.find({ user: req.params.id })
+  
+      .populate("products.product"); 
+        console.log("orders",orders);// to get product details
     res.status(200).json(orders);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch orders" });
@@ -275,14 +277,58 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+const allOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email") // Just get the user who placed the order
+      .populate("products.product", "name"); // Get product name only
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error: Unable to fetch orders",
+    });
+  }
+};
+
+
+
+// Update Status (Admin)
+const updateStatus = async (req, res) => {
+  const { orderId, status } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    order.status = status;
+    if (status === 'delivered') {
+      order.deliveredAt = new Date();
+    }
+
+    await order.save();
+    res.json({ success: true, message: 'Status updated', order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Default export
 export {
   placeOrder,
   placeOrderStripe,
   placeOrderRazorpay,
+  verifyStripe,
+  verifyRazorpay,
   getUserOrders,
   returnOrder,
   cancelOrder,
-  verifyStripe,
-  verifyRazorpay,
-  
+  allOrders,
+  updateStatus,
 };

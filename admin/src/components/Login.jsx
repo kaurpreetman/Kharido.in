@@ -1,32 +1,20 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { backendUrl } from '../App';
-import { toast } from 'react-toastify';
+import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
-const Login = ({ setToken }) => {
+const Login = () => {
+  const { login } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post(`${backendUrl}/api/auth/adlogin`, {
-        email,
-        password
-      });
-
-      if (response.data.success) {
-        setToken(response.data.token);
-        navigate('/add'); // 👈 Redirect after login
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      console.log(error.response?.data);
-      toast.error(error.response?.data?.message || error.message);
+    const result = await login(email, password);
+    if (result.success) {
+      navigate('/add'); // redirect on success
     }
+    // else error toast already handled in login function
   };
 
   return (

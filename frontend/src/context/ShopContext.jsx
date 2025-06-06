@@ -54,7 +54,7 @@ const ShopContextProvider = ({ children }) => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/products/all");
-        console.log("products",res);
+       
         setProducts(res.data.products);
       } catch (err) {
         console.error("Failed to fetch products", err);
@@ -85,6 +85,7 @@ const ShopContextProvider = ({ children }) => {
   // Sync cart when user logs in
   useEffect(() => {
     if (user) fetchCart();
+   
   }, [user]);
 
   // Calculate totals
@@ -187,9 +188,11 @@ const ShopContextProvider = ({ children }) => {
   };
 
   // Orders
-  const getUserOrders = async () => {
+  const getUserOrders = async (id) => {
     try {
-      const res = await axios.get("http://localhost:5000/api/orders/my-orders");
+      const res = await axios.get(`http://localhost:5000/api/orders/user/${id}`);
+   
+       
       return res.data;
     } catch (error) {
       throw new Error(
@@ -222,28 +225,9 @@ const ShopContextProvider = ({ children }) => {
     setSelectedAddress(addr);
     localStorage.setItem("selectedAddress", JSON.stringify(addr));
   };
-  const getProductData=async()=>{
-    try{
-       const response =await axios.get(backendurl+'/api/product/list')
-       //console.log(response.data);
-       if(response.data.success){
-        setProducts(response.data.products)
-       }
-       else{
-        toast.error(response.data.message);
-       }
-       
-    }
-    catch(error){
-      console.log(error);
-      toast.error(error.message);
-      
-    }
-  }
+ 
 
-  useEffect(()=>{
-    getProductData();
-  },[])
+ 
   return (
     <ShopContext.Provider
       value={{
@@ -275,7 +259,7 @@ const ShopContextProvider = ({ children }) => {
         setSearch,
         lastOrder,
         setLastOrder,
-        getUserOrders,
+      getUserOrders,
         backendurl,
         
       }}
