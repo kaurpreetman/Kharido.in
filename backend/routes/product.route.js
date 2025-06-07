@@ -40,6 +40,7 @@ router.post('/status', adminRoute, updatestatus);
 router.get('/featured', protectRoute, featuredProducts);
 router.get('/recomm', recommended);
 router.get('/category/:category', getProductCategory);
+router.get('/all', getAllProducts);
 
 // 🗑️ DELETE ROUTE
 router.delete('/:id', protectRoute, adminRoute, deleteProduct);

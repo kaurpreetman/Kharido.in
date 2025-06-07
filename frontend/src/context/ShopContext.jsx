@@ -224,7 +224,7 @@ const ShopContextProvider = ({ children }) => {
   };
   const getProductData=async()=>{
     try{
-       const response =await axios.get(backendurl+'/api/product/list')
+       const response =await axios.get('http://localhost:5000/api/product/list')
        //console.log(response.data);
        if(response.data.success){
         setProducts(response.data.products)

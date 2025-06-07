@@ -42,7 +42,16 @@ formData.append("sizes", JSON.stringify(sizes));
 // formData.append("image3", file3);
 // formData.append("image4", file4);
 
-const response = await axios.post('http://localhost:5000/api/products/create', formData)
+const response = await axios.post('http://localhost:5000/api/product/create', formData)
+// const token = localStorage.getItem('token');
+
+// const response = await axios.post('http://localhost:5000/api/product/create', formData, {
+//   headers: {
+//     Authorization: `Bearer ${token}`,
+//     'Content-Type': 'multipart/form-data'
+//   }
+// });
+
 
 
       if (response.data.success) {
