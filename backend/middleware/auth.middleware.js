@@ -9,7 +9,7 @@ export const protectRoute = async (req, res, next) => {
       return res.status(401).json({ message: 'Unauthorized - No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, `${process.env.ACCESS_TOKEN_SECRET}`);
     const user = await User.findById(decoded.userID).select('-password');
 
     if (!user) {
@@ -22,11 +22,4 @@ export const protectRoute = async (req, res, next) => {
     console.error('Token validation error:', error.message);
     return res.status(401).json({ message: 'Unauthorized - Invalid or expired token' });
   }
-};
-
-export const adminRoute = (req, res, next) => {
-  if (req.user?.role === 'admin') {
-    return next();
-  }
-  return res.status(403).json({ message: 'Access denied - Admin only' });
 };

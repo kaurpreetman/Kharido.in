@@ -120,15 +120,23 @@ export const adminLogin = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required.' });
 
     const user = await User.findOne({ email });
-
     if (!user || user.role !== 'admin')
       return res.status(403).json({ message: 'Access denied. Admin only.' });
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials.' });
+    if (!isMatch)
+      return res.status(401).json({ message: 'Invalid credentials.' });
 
-    const accessToken = generateAccessToken(user._id);
-    setAccessTokenCookie(res, accessToken);
+    const accessToken = jwt.sign({ userID: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: '7d',
+    });
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false, // set true in production if using HTTPS
+      sameSite: 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     const { password: _, ...userWithoutPassword } = user.toObject();
 
@@ -136,7 +144,6 @@ export const adminLogin = async (req, res) => {
       success: true,
       message: 'Admin logged in successfully.',
       user: userWithoutPassword,
-      token: accessToken,
     });
   } catch (error) {
     console.error('Admin login error:', error);

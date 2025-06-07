@@ -31,45 +31,45 @@ export const CheckoutPage = () => {
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
   };
+const initRazorpay = (order, orderData) => {
+  const options = {
+    key: 'rzp_test_bk6H7mPcuQKWlk',
+    amount: orderData.totalAmount * 100, // 🔴 important fix here
+    currency: 'INR',
+    name: 'Order Payment',
+    description: 'Order Payment',
+    order_id: order.orderId,
+    handler: async function (response) {
+      try {
+        await axios.post('http://localhost:5000/api/orders/verifyRazorpay', {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          orderId: orderData._id,
+          userId: user._id
+        }, authHeader);
 
-  const initRazorpay = (order, orderData) => {
-    const options = {
-      key: '',
-      amount: order.amount,
-      currency: order.currency,
-      name: 'Order Payment',
-      description: 'Order Payment',
-      order_id: order.id,
-      handler: async function (response) {
-        try {
-          await axios.post('http://localhost:5000/api/orders/verifyRazorpay', {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            orderId: orderData._id,
-            userId: user._id
-          }, authHeader);
-
-          toast.success('🎉 Payment successful and verified!');
-          clearCart();
-          setLastOrder(orderData);
-          navigate('/order-success');
-        } catch (error) {
-          toast.error('❌ Payment verification failed.');
-        }
-      },
-      prefill: {
-        name: user?.name || '',
-        email: user?.email || '',
-      },
-      theme: {
-        color: '#3399cc',
-      },
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+        toast.success('🎉 Payment successful and verified!');
+        clearCart();
+        setLastOrder(orderData);
+        navigate('/order-success');
+      } catch (error) {
+        toast.error('❌ Payment verification failed.');
+      }
+    },
+    prefill: {
+      name: user?.name || '',
+      email: user?.email || '',
+    },
+    theme: {
+      color: '#3399cc',
+    },
   };
+
+  const rzp = new window.Razorpay(options);
+  rzp.open();
+};
+
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -121,11 +121,12 @@ export const CheckoutPage = () => {
       switch (paymentMethod) {
         case 'razorpay':
           response = await axios.post('http://localhost:5000/api/orders/razorpay', order, authHeader);
+          console.log(response);
           initRazorpay(response.data, response.data.order);
           return;
         case 'stripe':
           response = await axios.post('http://localhost:5000/api/orders/stripe', order, authHeader);
-          const stripe = await loadStripe(import.meta.env.STRIPE_SECRET_KEY);
+          const stripe = await loadStripe(`${import.meta.env.STRIPE_SECRET_KEY}`);
           await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
           return;
         case 'cash_on_delivery':
