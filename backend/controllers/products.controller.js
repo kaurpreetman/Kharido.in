@@ -98,27 +98,6 @@ export const singleProduct=async(req,res)=>{
     }
 }
 
-export const featuredProducts=async (req,res)=>{
-    try {
-        let featuredProduct=await redis.set("featured_products");
-
-        if(featuredProduct){
-            return res.json(JSON.parse(featuredProduct));
-        }
-
-        featuredProduct=await Product.find({isFeatured:true}).lean();
-
-        if(!featuredProduct){
-            return res.status(404).json({message:"No featured products found"});
-        }
-
-        await redis.set("featured_products",JSON.stringify(featuredProduct));
-        res.json(featuredProduct);
-    } catch (error) {
-        console.log("Error in getFeaturedProducts controller", error.message);
-        res.status(500).json({message:"Server error",error: error.message});
-    }
-}
 
 export const deleteProduct = async (req, res) => {
   try {
@@ -151,22 +130,22 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-export const recommended=async(req,res)=>{
-    try {
-        const limit = 15; 
-    
-       
-        const randomProducts = await Product.aggregate([{ $sample: { size: limit } }]);
-    
-        res.status(200).json({
-          message: 'Random recommended products fetched successfully',
-          recommendedProducts: randomProducts,
-        });
-      } catch (error) {
-        console.error('Error fetching random recommended products:', error.message);
-        res.status(500).json({ message: 'Internal Server Error' });
-      }
-}
+export const getBestsellerProducts = async (req, res) => {
+  try {
+    const bestsellerProducts = await Product.find({ bestseller: true });
+    res.status(200).json({
+      success: true,
+      message: "Bestseller products fetched successfully",
+      data: bestsellerProducts
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch bestseller products",
+      error: error.message
+    });
+  }
+};
 
 export const getProductCategory= async(req,res)=>{
 
@@ -199,16 +178,8 @@ export const togglefeaturedProduct=async(req,res)=>{
     }
 }
 
-async function updateFeaturedProductsCache() {
-    try{
-        const featuredProducts=await Product.find({isFeatured:true}).lean();
-        await redis.set("featured_products",JSON.stringify(featuredProducts));
-    }
-    catch(error){
-        console.log("Error in update cache function")
-    }
-    
-}
+ 
+
 
 export const addReview = async (req, res) => {
   const { rating, comment } = req.body;

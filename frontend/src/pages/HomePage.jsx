@@ -4,15 +4,21 @@ import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
-
+import axios from 'axios';
 export const HomePage = () => {
-  const { products } = useContext(ShopContext);
+  const { fetchBestsellers,bestsellers } = useContext(ShopContext);
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
-  useEffect(() => {
-    setFeaturedProducts(products.slice(0, 4));
-  }, [products]);
+    
+ useEffect(() => {
+  fetchBestsellers();
+}, []);
 
+useEffect(() => {
+  setFeaturedProducts(bestsellers.slice(0,4));
+}, [bestsellers]);
+
+ console.log(featuredProducts)
   return (
     <div className="space-y-16 py-8">
       {/* Hero Section */}
@@ -38,9 +44,9 @@ export const HomePage = () => {
       {/* Featured Products */}
       <section className="container">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold">⭐ Featured Products</h2>
+          <h2 className="text-3xl font-bold">⭐ Bestsellers of the week</h2>
           <Link
-            to="/products"
+            to="/bestsellers"
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             View All →

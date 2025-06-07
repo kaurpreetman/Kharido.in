@@ -27,7 +27,7 @@ const ShopContextProvider = ({ children }) => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
-
+const [bestsellers, setBestsellers] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [total, setTotal] = useState(0);
@@ -50,7 +50,7 @@ const ShopContextProvider = ({ children }) => {
   });
 
   // Fetch Products
-  useEffect(() => {
+
     const fetchProducts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/products/all");
@@ -62,9 +62,7 @@ const ShopContextProvider = ({ children }) => {
       }
     };
 
-    fetchProducts();
-  }, []);
-
+ 
   // Fetch Cart
   const fetchCart = async () => {
     try {
@@ -81,12 +79,22 @@ const ShopContextProvider = ({ children }) => {
       console.error("Error fetching cart", err);
     }
   };
-
+const fetchBestsellers = async () => {
+  try {
+    const res = await axios.get("http://localhost:5000/api/products/bestseller");
+    if (res.data.success) {
+      console.log(res.data.data);
+      setBestsellers(res.data.data); // Only first 4
+    } else {
+      toast.error("Failed to load bestsellers");
+    }
+  } catch (err) {
+    console.error("Error fetching bestsellers:", err);
+    toast.error("Error loading bestsellers");
+  }
+};
   // Sync cart when user logs in
-  useEffect(() => {
-    if (user) fetchCart();
-   
-  }, [user]);
+  
 
   // Calculate totals
   useEffect(() => {
@@ -106,7 +114,7 @@ const ShopContextProvider = ({ children }) => {
     setSubtotal(newSubtotal);
     setTotalCount(newTotalCount);
     setTotal(newSubtotal + delivery_fee);
-  }, [cartItems, products]);
+  }, [cartItems]);
 
   // Auth
   const login = (userData) => {
@@ -231,9 +239,12 @@ const ShopContextProvider = ({ children }) => {
   return (
     <ShopContext.Provider
       value={{
+        fetchProducts,
         products,
-        getSingleProduct,
         cartItems,
+        fetchCart,
+        getSingleProduct,
+        
         addToCart,
         updateQuantity,
         removeItem,
@@ -260,6 +271,8 @@ const ShopContextProvider = ({ children }) => {
         lastOrder,
         setLastOrder,
       getUserOrders,
+      bestsellers,
+    fetchBestsellers,
         //backendurl,
         
       }}

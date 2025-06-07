@@ -3,9 +3,9 @@ import {
   createProduct,
   addReview,
   getAllProducts,
-  featuredProducts,
+  getBestsellerProducts,
   deleteProduct,
-  recommended,
+  
   getProductCategory,
   singleProduct,
 } from '../controllers/products.controller.js';
@@ -34,8 +34,8 @@ router.post(
 // 📦 PRODUCT MANAGEMENT ROUTES
 router.post('/getsingle', singleProduct);
 
-router.get('/featured', protectRoute, featuredProducts);
-router.get('/recomm', recommended);
+
+router.get('/bestseller', protectRoute, getBestsellerProducts );
 router.get('/category/:category', getProductCategory);
 router.get('/all',protectRoute, getAllProducts);
 // 🗑️ DELETE ROUTE

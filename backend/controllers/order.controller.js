@@ -210,7 +210,7 @@ const getUserOrders = async (req, res) => {
     const orders = await Order.find({ user: req.params.id })
   
       .populate("products.product"); 
-        console.log("orders",orders);// to get product details
+      
     res.status(200).json(orders);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch orders" });

@@ -28,8 +28,7 @@ const List = () => {
     try {
       const response = await axios.delete(
         `http://localhost:5000/api/products/remove/${id}`,
-     
-        { withCredentials: true } // 🍪 Cookie included in removal too
+     { withCredentials: true } 
       );
 
       if (response.data.success) {
