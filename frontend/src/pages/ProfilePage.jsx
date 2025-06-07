@@ -71,6 +71,13 @@ export const ProfilePage = () => {
 console.log(orders);
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
+      <div className="mb-8 bg-gray-100 p-6 rounded shadow">
+  <h2 className="text-xl font-semibold text-gray-800 mb-2">👤 User Info</h2>
+  <p><strong>Name:</strong> {user.name || "N/A"}</p>
+  <p><strong>Email:</strong> {user.email || "N/A"}</p>
+  <p><strong>Joined:</strong> {new Date(user.createdAt).toLocaleDateString() || "N/A"}</p>
+</div>
+
       <h1 className="text-3xl font-bold text-center text-blue-700 mb-8">📦 My Orders</h1>
 
       {ordersLoading ? (
@@ -104,12 +111,17 @@ console.log(orders);
               </div>
 
               <div className="space-y-2 text-sm">
-                {order.products.map((item, idx) => (
-                  <div key={idx} className="flex justify-between">
-                    <span>{item.product.name} (x{item.quantity})</span>
-                    <span>${item.product.price.toFixed(2)}</span>
-                  </div>
-                ))}
+                {order.products.map((item, idx) => {
+  const product = item.product;
+
+  return (
+    <div key={idx} className="flex justify-between">
+      <span>{product?.name || "Unknown Product"} (x{item.quantity})</span>
+      <span>${product?.price ? product.price.toFixed(2) : "0.00"}</span>
+    </div>
+  );
+})}
+
               </div>
 
               <div className="mt-4 flex gap-3">

@@ -29,7 +29,7 @@ const Add = () => {
       formData.append("category", category);
       formData.append("subCategory", subCategory);
       formData.append("bestseller", bestseller.toString());
-formData.append("sizes", JSON.stringify(sizes));
+      formData.append("sizes", JSON.stringify(sizes));
 
       image1 && formData.append("image1", image1);
       image2 && formData.append("image2", image2);
@@ -42,7 +42,18 @@ formData.append("sizes", JSON.stringify(sizes));
 // formData.append("image3", file3);
 // formData.append("image4", file4);
 
-const response = await axios.post('http://localhost:5000/api/product/create', formData)
+//const response = await axios.post('http://localhost:5000/api/products/create', formData)
+const response=await axios.post(
+  'http://localhost:5000/api/products/create',
+  formData,
+  {
+    withCredentials: true, // ✅ this includes cookies like accessToken
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }
+);
+
 // const token = localStorage.getItem('token');
 
 // const response = await axios.post('http://localhost:5000/api/product/create', formData, {

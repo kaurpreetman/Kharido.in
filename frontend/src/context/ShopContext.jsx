@@ -37,7 +37,7 @@ const ShopContextProvider = ({ children }) => {
   const delivery_fee = 10.0;
   const currency = "$";
   const [token,setToken]=useState('');
-  const backendurl=import.meta.env.REACT_APP_SERVER_URL
+  //const backendurl=import.meta.env.REACT_APP_SERVER_URL
   // Address states
   const [addresses, setAddresses] = useState(() => {
     const saved = localStorage.getItem("addresses");
@@ -260,7 +260,7 @@ const ShopContextProvider = ({ children }) => {
         lastOrder,
         setLastOrder,
       getUserOrders,
-        backendurl,
+        //backendurl,
         
       }}
     >
