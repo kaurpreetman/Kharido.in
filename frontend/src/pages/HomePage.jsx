@@ -4,6 +4,9 @@ import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
+import BestSeller from '../components/BestSeller';
+import OurPolicy from '../components/OurPolicy';
+import NewsletterBox from '../components/NewsletterBox';
 
 export const HomePage = () => {
   const { products } = useContext(ShopContext);
@@ -34,6 +37,10 @@ export const HomePage = () => {
           </div>
         </div>
       </section>
+
+      <BestSeller/>
+      <OurPolicy/>
+      <NewsletterBox/>
 
       {/* Featured Products */}
       <section className="container">

@@ -16,6 +16,7 @@ import  ProtectedRoute  from './components/utils/ProtectedRoute';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { ShopContext } from './context/ShopContext.jsx';
 import FAQ from './pages/FAQ.jsx'
+import { Footer } from './components/layout/Footer.jsx';
 
 function App() {
   const { user } = React.useContext(ShopContext);
@@ -89,6 +90,7 @@ function App() {
           <Route path="faq" element={<FAQ/>} />
         </Route>
       </Routes>
+      <Footer/>
     </div>
   );
 }
