@@ -14,8 +14,10 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import  ProtectedRoute  from './components/utils/ProtectedRoute';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import {BestSellers} from './pages/BestSeller.jsx'
 import { ShopContext } from './context/ShopContext.jsx';
 import FAQ from './pages/FAQ.jsx'
+import { Footer } from './components/layout/Footer.jsx';
 
 function App() {
   const { user } = React.useContext(ShopContext);
@@ -41,6 +43,14 @@ function App() {
             element={
               <ProtectedRoute isAllowed={!!user}>
                 <ProductDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="bestseller"
+            element={
+              <ProtectedRoute isAllowed={!!user}>
+                <BestSellers />
               </ProtectedRoute>
             }
           />
@@ -89,6 +99,7 @@ function App() {
           <Route path="faq" element={<FAQ/>} />
         </Route>
       </Routes>
+ 
     </div>
   );
 }

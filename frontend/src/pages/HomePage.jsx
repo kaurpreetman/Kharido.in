@@ -5,6 +5,8 @@ import { ProductCard } from '../components/ui/ProductCard';
 import { ShopContext } from '../context/ShopContext';
 import React, { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
+import OurPolicy from '../components/OurPolicy';
+
 export const HomePage = () => {
   const { fetchBestsellers,bestsellers } = useContext(ShopContext);
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -41,12 +43,14 @@ useEffect(() => {
         </div>
       </section>
 
+      
+
       {/* Featured Products */}
       <section className="container">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold">⭐ Bestsellers of the week</h2>
           <Link
-            to="/bestsellers"
+            to="/bestseller"
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             View All →
@@ -58,7 +62,7 @@ useEffect(() => {
           ))}
         </div>
       </section>
-
+       
       {/* Shop by Category */}
       <section className="container">
         <h2 className="text-3xl font-bold mb-8">🧭 Shop by Category</h2>
@@ -99,7 +103,9 @@ useEffect(() => {
             </div>
           </Link>
         </div>
+          <OurPolicy/>
       </section>
+       
     </div>
   );
 };

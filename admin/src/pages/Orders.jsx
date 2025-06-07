@@ -3,31 +3,29 @@ import axios from 'axios';
 import { backendUrl, currency } from '../App';
 import { toast } from 'react-toastify';
 import { assets } from '../assets/assets';
-import { useUser } from '../context/UserContext';
 
-const Orders = () => {
-  const { user } = useUser();
+const Orders = ({ token }) => {
   const [orders, setOrders] = useState([]);
-  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [count, setCount] = useState(0);
 
   const fetchAllOrders = async () => {
+    if (!token) return;
     setLoading(true);
     try {
       const response = await axios.post(
-        `${backendUrl}/api/orders/list`,
+        backendUrl + '/api/order/list',
         {},
-        { withCredentials: true }
+        { headers: { token } }
       );
-
       if (response.data.success) {
-        setOrders(response.data.data);
-        setCount(response.data.count);
+        setOrders(response.data.orders);
+        setCount(response.data.orders.length);
       } else {
-        toast.error(response.data.message || 'Failed to fetch orders');
+        toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'Error fetching orders');
+      toast.error(error.message);
     }
     setLoading(false);
   };
@@ -37,7 +35,7 @@ const Orders = () => {
       const response = await axios.post(
         `${backendUrl}/api/orders/status`,
         { orderId, status: event.target.value },
-        { withCredentials: true }
+        { headers: { token } }
       );
 
       if (response.data.success) {
@@ -47,16 +45,14 @@ const Orders = () => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'Failed to update status');
+      toast.error(error.message);
     }
   };
 
   useEffect(() => {
-    if (user) {
-      fetchAllOrders();
-    }
-  }, [user]);
-  console.log(orders);
+    fetchAllOrders();
+  }, [token]);
+
   return (
     <div>
       <h3 className="text-xl font-semibold mb-4">All Orders</h3>
@@ -71,7 +67,7 @@ const Orders = () => {
             orders.map((order, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-sm sm:text-sm text-gray-700"
+                className="grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-sm text-gray-700"
               >
                 {/* Icon */}
                 <img className="w-12" src={assets.parcel_icon} alt="Parcel" />

@@ -39,7 +39,7 @@ export const ProductCard = ({ product }) => {
   <div className="flex items-center">
     <Star className="h-4 w-4 text-yellow-400 fill-current" />
     <span className="ml-1 text-sm text-gray-600">
-      {product.averageRating || "N/A"}
+      {product.averageRating.toFixed(2)}
     </span>
   </div>
 
