@@ -4,21 +4,25 @@ import { ShopContext } from '../context/ShopContext.jsx';
 import { ProductCard } from '../components/ui/ProductCard.jsx';
 
 export const ProductsPage = () => {
-  const { products, search } = useContext(ShopContext);
+  const { products, search, fetchProducts } = useContext(ShopContext);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortOrder, setSortOrder] = useState('relevant');
 
   const categoriesWithSubcategories = {
-    All: [],
-    Electronics: ['📱 Mobiles', '💻 Laptops', '🔌 Accessories', '📟 Tablets', '📷 Cameras', '🎧 Audio & Headphones', '⌚ Wearable Tech'],
-    Fashion: ['👔 Men', '👗 Women', '🧒 Kids', '👟 Footwear', '⌚ Watches', '💍 Jewelry', '👜 Handbags & Wallets', '🎎 Ethnic Wear'],
-    'Home & Living': ['🛋️ Furniture', '🖼️ Decor', '🍳 Kitchen', '🛏️ Bedding', '💡 Lighting', '🧻 Bathroom Essentials', '📦 Storage & Organization', '🌱 Gardening'],
-    Sports: ['🏋️ Gym Equipment', '🥾 Outdoor Gear', '👕 Sportswear', '🚴 Cycling', '👟 Footwear', '🎽 Accessories'],
-    Beauty: ['🧴 Skincare', '💇‍♀️ Haircare', '💄 Makeup', '🌸 Fragrances', '🧼 Personal Care', '🖌️ Tools & Brushes'],
-    Books: ['📖 Fiction', '📚 Non-Fiction', '🦸 Comics', '👶 Children’s Books', '🎓 Educational', '📱 E-Books'],
-  };
+  All: [],
+  Electronics: ['Mobiles', 'Laptops', 'Accessories'],
+  Fashion: ['Men', 'Women', 'Footwear'],
+  'Home & Living': ['Furniture', 'Kitchen', 'Lighting'],
+  Sports: ['Gym Equipment', 'Sportswear', 'Footwear'],
+  Beauty: ['Skincare', 'Makeup', 'Fragrances'],
+  Books: ['Fiction', 'Non-Fiction', 'Children’s Books'],
+};
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     let filtered = products;
@@ -54,7 +58,7 @@ export const ProductsPage = () => {
       <div className="flex gap-8">
         <aside className="w-64 space-y-6">
           <div>
-            <h3 className="text-lg font-semibold mb-3">📂 Categories</h3>
+            <h3 className="text-lg font-semibold mb-3">Categories</h3>
             <div className="space-y-2">
               {Object.keys(categoriesWithSubcategories).map((category) => (
                 <div key={category}>
@@ -96,20 +100,20 @@ export const ProductsPage = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-3">💰 Sort by Price</h3>
+            <h3 className="text-lg font-semibold mb-3">Sort by Price</h3>
             <select
               className="w-full px-3 py-2 border rounded-md"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
             >
-              <option value="relevant">✨ Sort by: Relevant</option>
-              <option value="low-high">⬇️ Price: Low to High</option>
-              <option value="high-low">⬆️ Price: High to Low</option>
+              <option value="relevant">Sort by: Relevant</option>
+              <option value="low-high">Price: Low to High</option>
+              <option value="high-low">Price: High to Low</option>
             </select>
           </div>
         </aside>
 
-        <div className="flex-1">
+        <main className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {filteredProducts.length ? (
               filteredProducts.map((product) => (
@@ -119,7 +123,7 @@ export const ProductsPage = () => {
               <p>No products found.</p>
             )}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
