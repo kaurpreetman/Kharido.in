@@ -55,6 +55,7 @@ for (const key of imageKeys) {
       const savedProduct = await newProduct.save();
   
       res.status(201).json({
+        success:true,
         message: "Product created successfully.",
         product: savedProduct,
       });

@@ -42,7 +42,17 @@ formData.append("sizes", JSON.stringify(sizes));
 // formData.append("image3", file3);
 // formData.append("image4", file4);
 
-const response = await axios.post('http://localhost:5000/api/products/create', formData)
+const response = await axios.post(
+  'http://localhost:5000/api/products/create',
+  formData,
+  {
+    withCredentials: true, // ✅ send cookies
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }
+);
+
 
 
       if (response.data.success) {
