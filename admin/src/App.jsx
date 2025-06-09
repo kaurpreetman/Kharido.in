@@ -17,7 +17,7 @@ export const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export const currency = '$';
 
 const AppRoutes = () => {
-  const { user } = useUser();
+  const { user,setUser } = useUser();
 
   return (
     <>
@@ -26,7 +26,9 @@ const AppRoutes = () => {
         <Login />
       ) : (
         <>
-          <Navbar />
+          <Navbar setUser={setUser} />
+
+
           <hr />
           <div className="flex w-full">
             <Sidebar />
@@ -53,7 +55,7 @@ const AppRoutes = () => {
                 } />
                 <Route path="/orders" element={
                   <ProtectedRoute isAllowed={!!user}>
-                    <Orders />
+                       <Orders/>
                   </ProtectedRoute>
                 } />
               </Routes>

@@ -219,10 +219,10 @@ const getUserOrders = async (req, res) => {
 
 // Return order
 const returnOrder = async (req, res) => {
-  const { orderId } = req.body;
+  const { orderId, userId } = req.body;
 
   try {
-    const order = await Order.findOne({ _id: orderId, user: req.user._id });
+    const order = await Order.findOne({ _id: orderId, user: userId });
 
     if (!order || order.isReturned) {
       return res.status(404).json({ message: "Order not found or already returned" });
@@ -250,10 +250,10 @@ const returnOrder = async (req, res) => {
 
 // Cancel order
 const cancelOrder = async (req, res) => {
-  const { orderId } = req.body;
+  const { orderId, userId } = req.body;
 
   try {
-    const order = await Order.findOne({ _id: orderId, user: req.user._id });
+    const order = await Order.findOne({ _id: orderId, user: userId });
 
     if (!order || order.isCancelled) {
       return res.status(404).json({ message: "Order not found or already cancelled" });

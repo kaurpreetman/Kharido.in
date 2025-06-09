@@ -23,3 +23,10 @@ export const protectRoute = async (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized - Invalid or expired token' });
   }
 };
+// export const isAdmin = (req, res, next) => {
+//   if (req.user?.role !== 'admin') {
+//     return res.status(403).json({ message: "Access denied: Admins only" });
+//   }
+//   next();
+// };
+

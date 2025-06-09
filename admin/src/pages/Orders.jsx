@@ -8,7 +8,8 @@ const Orders = ({ token }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
-
+  console.log(`token ${token}`);
+  
   const fetchAllOrders = async () => {
     if (!token) return;
     setLoading(true);

@@ -51,7 +51,12 @@ export const ProfilePage = () => {
   const handleCancelOrReturn = async (orderId) => {
     try {
       setProcessingOrderId(orderId);
-      await axios.post("http://localhost:5000/api/orders/cancel", { orderId });
+      //await axios.post("http://localhost:5000/api/orders/cancel", { orderId });
+      await axios.post("http://localhost:5000/api/orders/cancel", {
+  orderId,
+  userId: user._id,  // make sure user object is available
+});
+
       toast.success("✅ Order updated");
       fetchOrdersWithProducts();
     } catch (err) {
