@@ -17,7 +17,8 @@ const razorpay = new Razorpay({
 // Place Order (COD & Bank Transfer)
 const placeOrder = async (req, res) => {
   try {
-    const { user, products, totalAmount, address, paymentMethod } = req.body;
+    const user=req.user?._id
+    const {products, totalAmount, address, paymentMethod } = req.body;
 
     if (!user || !products.length || !totalAmount || !address || !paymentMethod) {
       return res.status(400).json({ message: "All fields are required" });
@@ -37,7 +38,7 @@ const placeOrder = async (req, res) => {
 
     await User.findByIdAndUpdate(user, {
       $push: { orders: { product: newOrder._id } },
-      $set: { cartItems: {} },
+      
     });
 
     res.status(201).json({ message: "Order placed successfully", order: newOrder });
@@ -49,11 +50,12 @@ const placeOrder = async (req, res) => {
 // Place Order with Stripe
 const placeOrderStripe = async (req, res) => {
   try {
-    const { user, products, totalAmount, address, paymentMethod } = req.body;
+    const user= req.user?._id;
+const { products, totalAmount, address, paymentMethod } = req.body;
 
-    if (!user || !products.length || !totalAmount || !address || !paymentMethod) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+if (!user || !products?.length || !totalAmount || !address || !paymentMethod) {
+  return res.status(400).json({ message: "All fields are required" });
+}
 
     const deliveryCharge = 10; // ₹10
     const currency = "inr";
@@ -91,24 +93,24 @@ const placeOrderStripe = async (req, res) => {
     ];
 
     const newOrder = new Order({
-      user,
-      products,
-      totalAmount,
-      address,
-      paymentMethod: "stripe",
-      paymentStatus: "pending",
-      status: "pending",
-    });
+  user: user,
+  products,
+  totalAmount,
+  address,
+  paymentMethod: "stripe",
+  paymentStatus: "pending",
+  status: "pending",
+});
 
     await newOrder.save();
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items,
-      mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/order-success?orderId=${newOrder._id}&userId=${user}`,
-      cancel_url: `${process.env.CLIENT_URL}/checkout`,
-    });
+  payment_method_types: ["card"],
+  line_items,
+  mode: "payment",
+  success_url: `${process.env.CLIENT_URL}/order-success/${user}/${newOrder._id}`,
+  cancel_url: `${process.env.CLIENT_URL}/checkout`,
+});
 
     res.status(201).json({ sessionId: session.id, order: newOrder });
   } catch (error) {
@@ -120,26 +122,39 @@ const placeOrderStripe = async (req, res) => {
 
 // Verify Stripe Payment
 const verifyStripe = async (req, res) => {
-  const { orderId, success, userId } = req.body;
+  const userId = req.user?._id;
+  const { orderId, success } = req.body;
+
   try {
+    if (!orderId || !userId) {
+      return res.status(400).json({ success: false, message: "Missing orderId or userId" });
+    }
+
     if (success === "true") {
+    
       await Order.findByIdAndUpdate(orderId, { paymentStatus: "paid" });
-      await User.findByIdAndUpdate(userId, { cartItems: {} });
-      res.json({ success: true });
+
+   
+      // await User.findByIdAndUpdate(userId, { $set: { cartItems: {} } });
+
+      return res.status(200).json({ success: true, message: "Payment verified and cart cleared" });
     } else {
+ 
       await Order.findByIdAndDelete(orderId);
-      res.json({ success: false });
+      return res.status(200).json({ success: false, message: "Payment failed. Order deleted" });
     }
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.error("Stripe verification error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Place Order with Razorpay
 const placeOrderRazorpay = async (req, res) => {
   try {
-    const { user, products, totalAmount, address } = req.body;
+    const user = req.user?._id;
+    const { products, totalAmount, address } = req.body;
 
     if (!user || !products.length || !totalAmount || !address) {
       return res.status(400).json({ message: "All fields are required" });
@@ -176,7 +191,8 @@ const placeOrderRazorpay = async (req, res) => {
 // Verify Razorpay Payment
 const verifyRazorpay = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId } = req.body;
+    const userId=req.user?._id
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId} = req.body;
 
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
@@ -191,7 +207,7 @@ const verifyRazorpay = async (req, res) => {
         razorpaySignature: razorpay_signature,
       });
 
-      await User.findByIdAndUpdate(userId, { cartItems: {} });
+      // await User.findByIdAndUpdate(userId, { cartItems: {} });
 
       res.status(200).json({ success: true, message: "Payment verified successfully" });
     } else {
@@ -208,11 +224,15 @@ const verifyRazorpay = async (req, res) => {
 const getUserOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.params.id })
-  
-      .populate("products.product"); 
-      
+      .populate({
+        path: 'products.product',
+        model: 'Product',
+        select: 'name' // ✅ only fetch name (you can add price, image etc. too)
+      });
+
     res.status(200).json(orders);
   } catch (err) {
+    console.error("Fetch error:", err);
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 };

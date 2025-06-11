@@ -1,15 +1,33 @@
-import React from 'react'
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Footer } from './Footer';
-import { Header } from './Header'
+import { Header } from './Header';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUser } from '../../context/userSlice';
+
 export const Layout = () => {
+  const dispatch = useDispatch();
+  const authLoading = useSelector((state) => state.user.authLoading);
+
+  useEffect(() => {
+    dispatch(fetchUser());
+  }, [dispatch]);
+
+  if (authLoading) {
+    return (
+      <div className="h-screen flex justify-center items-center text-lg">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-        <Header/>
-        <main className="flex-1 bg-gray-50">
+      <Header />
+      <main className="flex-1 bg-gray-50">
         <Outlet />
       </main>
       <Footer />
     </div>
-  )
-}
+  );
+};

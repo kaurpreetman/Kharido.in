@@ -1,8 +1,14 @@
-import React, { useState, useContext } from "react";
+// Updated CheckoutForm.jsx (Redux version)
+import React, { useState } from "react";
 import { z } from "zod";
-import { ShopContext } from "../../context/ShopContext";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  selectAddress,
+} from "../../context/addressSlice";
 
-// Zod validation schema
 const addressSchema = z.object({
   street: z.string().min(1, "Street Address is required"),
   city: z.string().min(1, "City is required"),
@@ -12,15 +18,8 @@ const addressSchema = z.object({
 });
 
 export const CheckoutForm = ({ loading }) => {
-  const {
-    selectAddress,
-    selectedAddress,
-    addAddress,
-    updateAddress,
-    deleteAddress,
-    addresses,
-    
-  } = useContext(ShopContext);
+  const dispatch = useDispatch();
+  const { addresses, selectedAddress } = useSelector((state) => state.address);
 
   const [address, setAddress] = useState({
     street: "",
@@ -36,10 +35,7 @@ export const CheckoutForm = ({ loading }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setAddress((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveAddress = (e) => {
@@ -54,10 +50,10 @@ export const CheckoutForm = ({ loading }) => {
     } else {
       setErrors({});
       if (editingIndex !== null) {
-        updateAddress(editingIndex, validation.data);
+        dispatch(updateAddress({ index: editingIndex, updatedAddress: validation.data }));
         setEditingIndex(null);
       } else {
-        addAddress(validation.data);
+        dispatch(addAddress(validation.data));
       }
       setAddress({ street: "", city: "", state: "", zipCode: "", country: "" });
       setShowForm(false);
@@ -77,16 +73,16 @@ export const CheckoutForm = ({ loading }) => {
   };
 
   const handleSelectAddress = (index) => {
-    selectAddress(addresses[index]);
+    dispatch(selectAddress(addresses[index]));
   };
 
   const handleDeleteAddress = (index) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this address?");
     if (confirmDelete) {
       if (addresses[index] === selectedAddress) {
-        selectAddress(null); 
+        dispatch(selectAddress(null));
       }
-      deleteAddress(index);
+      dispatch(deleteAddress(index));
     }
   };
 
@@ -106,7 +102,8 @@ export const CheckoutForm = ({ loading }) => {
                   <input
                     type="radio"
                     name="selected-address"
-                    checked={selectedAddress === addr}
+                    checked={JSON.stringify(selectedAddress) === JSON.stringify(addr)
+}
                     onChange={() => handleSelectAddress(index)}
                     className="mr-3"
                   />

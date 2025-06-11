@@ -1,5 +1,6 @@
 // models/Order.js
 import mongoose from "mongoose";
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -15,10 +16,9 @@ const orderSchema = new mongoose.Schema(
           required: true,
         },
         size: {
-          type: String,
-          enum: ["S", "M", "L", "XL"],
-          required: true,
-        },
+  type: String,
+  required: false, 
+},
         quantity: {
           type: Number,
           required: true,
@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled","Returned"],
       default: "pending",
     },
     paymentMethod: {

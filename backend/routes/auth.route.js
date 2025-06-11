@@ -8,7 +8,8 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.post("/adlogin",adminLogin);
 router.post("/logout", logout);
-router.get("/profile", protectRoute, getProfile);
+router.get("/profile", protectRoute,getProfile);
+
 router.post("/google-signup", googleSignup);
 
 export default router;

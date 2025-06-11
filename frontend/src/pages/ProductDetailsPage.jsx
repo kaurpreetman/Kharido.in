@@ -1,47 +1,34 @@
-import { useState, useEffect, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ShopContext } from "../context/ShopContext";
 import { ShoppingCart, Heart } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
 import { RecommendProduct } from "../components/ui/RecommendProduct";
 import { StarRating } from "../components/ui/StarRating";
+import { fetchSingleProduct } from "../context/productSlice.js";
+import { addToCart } from "../context/cartSlice";
 
 export function ProductDetailsPage() {
   const { id } = useParams();
-  const { currency, addToCart, getSingleProduct } = useContext(ShopContext);
+  const dispatch = useDispatch();
 
-  const [product, setProduct] = useState(null);
+  const currency = '$';
+  const product = useSelector((state) => state.product.singleProduct);
+  const loading = useSelector((state) => state.product.loadingSingle);
+
   const [image, setImage] = useState('');
   const [size, setSize] = useState('');
-  const [reviews, setReviews] = useState([]);
-  const [showAllReviews, setShowAllReviews] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
-  const fetchProduct = async () => {
-    try {
-      setLoading(true);
-      const data = await getSingleProduct(id);
-    
-      console.log(data)
-      if (data) {
-        setProduct(data);
-        setReviews(data.reviews || []);
-        setImage(data.image?.[0] || "");
-      } else {
-        console.error("Product not found");
+    dispatch(fetchSingleProduct(id)).then((res) => {
+      if (res.payload?.image?.length > 0) {
+        setImage(res.payload.image[0]);
       }
-    } catch (err) {
-      console.error("Error fetching product:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+  }, [dispatch, id]);
 
   const handleSubmitReview = async () => {
     if (!rating || !comment.trim()) {
@@ -60,7 +47,7 @@ export function ProductDetailsPage() {
 
       const data = await res.json();
       if (res.ok) {
-        await fetchProduct();
+        dispatch(fetchSingleProduct(id));
         setRating(0);
         setComment('');
       } else {
@@ -76,6 +63,7 @@ export function ProductDetailsPage() {
   if (loading) return <div className="p-10">Loading...</div>;
   if (!product) return <div className="p-10">Product not found.</div>;
 
+  const reviews = product.reviews || [];
   const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 3);
 
   return (
@@ -104,7 +92,7 @@ export function ProductDetailsPage() {
           </div>
         </div>
 
-        {/* Details */}
+        {/* Product Details */}
         <div className="flex-1">
           <h1 className="font-bold text-3xl mt-2">{product.name}</h1>
           <div className="flex items-center gap-2 mt-2">
@@ -132,7 +120,7 @@ export function ProductDetailsPage() {
             </div>
           )}
 
-          {/* Actions */}
+          {/* Add to Cart */}
           <div className="flex gap-4 mt-8">
             <button
               className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700"
@@ -141,7 +129,7 @@ export function ProductDetailsPage() {
                   alert("Please select a size.");
                   return;
                 }
-                addToCart(product._id, size);
+                dispatch(addToCart({ productId: product._id, size }));
               }}
             >
               <ShoppingCart className="h-5 w-5" />
@@ -154,7 +142,7 @@ export function ProductDetailsPage() {
         </div>
       </div>
 
-      {/* Recommend */}
+      {/* Recommendations */}
       <RecommendProduct
         category={product.category}
         subcategory={product.subcategory}

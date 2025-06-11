@@ -1,67 +1,102 @@
-import { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
-import { ShopContext } from "../context/ShopContext";
-import { CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { clearCartOnServer } from '../context/cartSlice';
+import { toast } from 'react-toastify';
+import { CheckCircle } from 'lucide-react';
 
-export function OrderConfirmationPage() {
-  const { lastOrder, setLastOrder, token, clearCart } = useContext(ShopContext);
-  const { orderId: paramOrderId } = useParams();
-  const [loading, setLoading] = useState(!lastOrder);
-  const orderId = paramOrderId || localStorage.getItem("lastOrderId");
+export const OrderConfirmationPage = () => {
+  const { userId, orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!lastOrder && orderId) {
-      const fetchOrder = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:5000/api/orders/${orderId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setLastOrder(response.data.order);
-          clearCart();
-          localStorage.removeItem("lastOrderId");
-        } catch (error) {
-          console.error("Failed to fetch last order:", error);
-        } finally {
-          setLoading(false);
+    const verifyStripePayment = async () => {
+      try {
+        const res = await axios.post(
+          'http://localhost:5000/api/orders/verifyStripe',
+          { orderId, success: 'true' },
+          { withCredentials: true }
+        );
+     
+
+        if (res.data.success) {
+          toast.success('✅ Stripe payment verified!');
+          dispatch(clearCartOnServer());
+        } else {
+          toast.error('⚠️ Stripe verification failed.');
         }
-      };
+      } catch (err) {
+        console.error('Stripe verification error:', err);
+        toast.error('❌ Stripe verification failed.');
+      }
+    };
+
+    const fetchOrder = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/orders/${userId}/${orderId}`, {
+          withCredentials: true,
+        });
+
+        const orderData = res.data.order;
+        setOrder(orderData);
+
+        if (orderData.paymentMethod === 'stripe' && orderData.paymentStatus === 'pending') {
+          await verifyStripePayment();
+        } else if (
+          orderData.paymentMethod === 'cash_on_delivery' &&
+          orderData.paymentStatus === 'pending'
+        ) {
+          dispatch(clearCartOnServer());
+        } else if (orderData.paymentMethod === 'razorpay') {
+          if (orderData.paymentStatus === 'paid') {
+            dispatch(clearCartOnServer());
+          } else {
+            toast.warning('⏳ Razorpay payment not verified yet.');
+          }
+        }
+      } catch (err) {
+        console.error('Order fetch error:', err);
+        toast.error('❌ Failed to load order');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId && orderId) {
       fetchOrder();
-    } else {
-      setLoading(false);
     }
-  }, [lastOrder, orderId, token, setLastOrder]);
+  }, [userId, orderId, dispatch]);
+
+  const getPaymentLabel = (method) => {
+    switch (method) {
+      case 'stripe':
+        return 'Stripe';
+      case 'razorpay':
+        return 'Razorpay';
+      case 'cash_on_delivery':
+        return 'Cash on Delivery';
+      default:
+        return method;
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-20">⏳ Loading order details...</div>;
   }
 
-
-  if (!lastOrder) {
+  if (!order) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="text-2xl font-semibold mb-4">No order to display.</h2>
+        <h2 className="text-2xl font-semibold mb-4">❌ Order failed or not found.</h2>
         <Link to="/products" className="text-blue-600 hover:underline">
           🛍️ Continue Shopping
         </Link>
       </div>
     );
   }
-
-  const getPaymentLabel = (method) => {
-    switch (method) {
-      case "stripe":
-        return "Stripe";
-      case "razorpay":
-        return "Razorpay";
-      case "cash_on_delivery":
-        return "Cash on Delivery";
-      default:
-        return method;
-    }
-  };
 
   return (
     <div className="container py-10">
@@ -72,8 +107,30 @@ export function OrderConfirmationPage() {
           Your order has been confirmed and will be shipped soon 🚚
         </p>
       </div>
+
+      {/* Order Info Section */}
+      <div className="bg-gray-100 p-6 rounded-md shadow-md mb-8">
+        <h2 className="text-xl font-semibold mb-4">🧾 Order Summary</h2>
+        <p><strong>Order ID:</strong> {order._id}</p>
+        <p><strong>Total Amount:</strong> ₹{order.totalAmount}</p>
+        <p><strong>Status:</strong> {order.status}</p>
+        <p><strong>Payment Method:</strong> {getPaymentLabel(order.paymentMethod)}</p>
+        <p><strong>Payment Status:</strong> {order.paymentStatus}</p>
+        {order.deliveredAt && (
+          <p><strong>Delivered At:</strong> {new Date(order.deliveredAt).toDateString()}</p>
+        )}
+        {order.address && (
+          <>
+            <h3 className="mt-4 font-semibold">📍 Delivery Address</h3>
+            <p>{order.address.street}, {order.address.city}</p>
+            <p>{order.address.state}, {order.address.zipCode}, {order.address.country}</p>
+          </>
+        )}
+      </div>
+
+      {/* Products Section */}
       <div className="space-y-6">
-        {lastOrder.products.map((item, index) => (
+        {order.products.map((item, index) => (
           <div
             key={index}
             className="p-6 bg-white shadow-sm rounded-lg flex flex-col md:flex-row items-center border border-gray-200"
@@ -93,35 +150,14 @@ export function OrderConfirmationPage() {
 
               <div className="text-left">
                 <h2 className="text-lg font-semibold">
-                  {item.product.name || "Unnamed Product"}
+                  {item.product?.name || "Unnamed Product"}
                 </h2>
                 <div className="mt-2 text-gray-600 text-sm space-y-1">
-                  <p>
-                    💰 <span className="font-medium">${item.price}</span>
-                  </p>
+                  <p>💰 Price: ₹{item.price}</p>
                   <p>🔢 Quantity: {item.quantity}</p>
                   {item.size && <p>📏 Size: {item.size}</p>}
-                  <p>💳 Payment: {getPaymentLabel(lastOrder.paymentMethod)}</p>
                 </div>
-                {lastOrder.createdAt && (
-                  <p className="mt-4 text-gray-400 text-sm">
-                    🗓️ Date:{" "}
-                    <span className="text-gray-500">
-                      {new Date(lastOrder.createdAt).toDateString()}
-                    </span>
-                  </p>
-                )}
               </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center gap-6 md:ml-auto mt-4 md:mt-0">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <p className="text-sm text-gray-600">✅ Ready to ship</p>
-              </div>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
-                📦 Track Order
-              </button>
             </div>
           </div>
         ))}
@@ -137,4 +173,4 @@ export function OrderConfirmationPage() {
       </div>
     </div>
   );
-}
+};
