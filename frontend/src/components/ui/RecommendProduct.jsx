@@ -1,14 +1,20 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { ShopContext } from '../../context/ShopContext';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { ProductCard } from './ProductCard';
+import { fetchProducts } from '../../context/productSlice'; // Uncomment if you need to fetch products
 
 export const RecommendProduct = ({ category, subcategory, currentProductId }) => {
-    const { products } = useContext(ShopContext);
+    const dispatch = useDispatch();
+    const products = useSelector((state) => state.product.products); // Adjust based on your slice structure
     const [related, setRelated] = useState([]);
 
     useEffect(() => {
+      
+        if (!products || products.length === 0) {
+            dispatch(fetchProducts());
+        }
+
         if (products && products.length > 0) {
-            // Filter products by category and subcategory, excluding the current product
             const filteredProducts = products.filter(
                 (item) =>
                     item.category === category &&
@@ -16,10 +22,8 @@ export const RecommendProduct = ({ category, subcategory, currentProductId }) =>
                     item._id !== currentProductId
             );
 
-            // Shuffle the filtered products
             const shuffledProducts = filteredProducts.sort(() => Math.random() - 0.5);
 
-            // Select the first 8 random products
             setRelated(shuffledProducts.slice(0, 8));
         }
     }, [products, category, subcategory, currentProductId]);

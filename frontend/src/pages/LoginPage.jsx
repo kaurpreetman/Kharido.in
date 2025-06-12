@@ -1,11 +1,12 @@
-import React, { useState, useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
 import { Loader, UserPlus } from 'lucide-react';
 import axios from 'axios';
-import { ShopContext } from '../context/ShopContext';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../context/userSlice';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -13,31 +14,37 @@ const loginSchema = z.object({
 });
 
 export function LoginPage() {
-  const { login } = useContext(ShopContext); 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
-  //const {toke,setToken,navigate,backendUrl}=useContext(ShopContext)
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  //const [name,setName]=useState('');
- const googleLogin = useGoogleLogin({
+
+  const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
       try {
         const accessToken = tokenResponse.access_token;
 
-        const res = await axios.post('http://localhost:5000/api/auth/google-signup', {
-          token: accessToken,
-        }, { withCredentials: true });
+        const res = await axios.post(
+          'http://localhost:5000/api/auth/google-signup',
+          { token: accessToken },
+          { withCredentials: true }
+        );
 
-        login(res.data.user, res.data.token);
+        dispatch(setUser(res.data.user)); // ✅ Save to Redux
         toast.success('Logged in with Google!');
-        window.location.href = '/';
+        navigate(from); // ✅ Redirect
       } catch (err) {
         console.error('Google login error:', err);
         toast.error(err.response?.data?.message || 'Google login failed');
+      } finally {
+        setGoogleLoading(false);
       }
     },
     onError: () => toast.error('Google Sign-In failed'),
@@ -52,11 +59,15 @@ export function LoginPage() {
       setErrors({});
       setLoading(true);
 
-      const response = await axios.post('http://localhost:5000/api/auth/login', data, { withCredentials: true });
-      console.log("data-"+response.data.user + " token "+response.data.token)
-      login(response.data.user, response.data.token);
+      const response = await axios.post(
+        'http://localhost:5000/api/auth/login',
+        data,
+        { withCredentials: true }
+      );
+
+      dispatch(setUser(response.data.user));
       toast.success(response.data.message || 'Login successful!');
-      window.location.href = from;
+      navigate(from);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const formErrors = error.errors.reduce((acc, curr) => {
@@ -81,17 +92,13 @@ export function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link
-              to="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
+            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
               create a new account
             </Link>
           </p>
         </div>
 
-        {/* Regular Login Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <input
@@ -99,13 +106,13 @@ export function LoginPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
+                required
+                placeholder="Email address"
+                className={`w-full px-3 py-2 border rounded-md ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                placeholder="Email address"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
@@ -115,13 +122,13 @@ export function LoginPage() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
+                required
+                placeholder="Password"
+                className={`w-full px-3 py-2 border rounded-md ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                placeholder="Password"
               />
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
@@ -149,7 +156,6 @@ export function LoginPage() {
           </div>
         </form>
 
-        {/* Divider */}
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300" />
@@ -159,17 +165,19 @@ export function LoginPage() {
           </div>
         </div>
 
-        {/* Google Sign In Button */}
-         <button
+        <button
           onClick={() => googleLogin()}
-          className="w-full py-2 flex items-center justify-center gap-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100"
+          disabled={googleLoading}
+          className="w-full py-2 flex items-center justify-center gap-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100 disabled:opacity-50"
         >
           <img
             src="https://developers.google.com/identity/images/g-logo.png"
             alt="Google"
             className="w-5 h-5"
           />
-          <span className="text-sm font-medium text-gray-700">Sign up with Google</span>
+          <span className="text-sm font-medium text-gray-700">
+            {googleLoading ? 'Signing in with Google...' : 'Sign in with Google'}
+          </span>
         </button>
       </div>
     </div>

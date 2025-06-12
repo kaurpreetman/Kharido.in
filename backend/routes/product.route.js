@@ -35,7 +35,7 @@ router.post(
 router.post('/getsingle', singleProduct);
 
 
-router.get('/bestseller', protectRoute, getBestsellerProducts );
+router.get('/bestseller',  getBestsellerProducts );
 router.get('/category/:category', getProductCategory);
 router.get('/all',protectRoute, getAllProducts);
 // 🗑️ DELETE ROUTE

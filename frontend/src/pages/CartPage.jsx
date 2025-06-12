@@ -1,20 +1,48 @@
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus } from 'lucide-react';
-import { useContext } from 'react';
-import { ShopContext } from '../context/ShopContext';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchCart,
+  clearCart,
+  calculateTotals,
+  updateCartQuantity,
+  removeFromCart,
+} from '../context/cartSlice';
+import { fetchProducts } from '../context/productSlice';
 
 export function CartPage() {
+  const dispatch = useDispatch();
+
   const {
     cartItems,
-    currency,
-    products,
-    updateQuantity,
-    clearCart,
-    removeItem,
     subtotal,
-    total,
     delivery_fee,
-  } = useContext(ShopContext);
+    total
+  } = useSelector((state) => state.cart);
+
+  const products = useSelector((state) => state.product.products);
+  const currency = '₹';
+
+  useEffect(() => {
+    dispatch(fetchCart());
+    dispatch(fetchProducts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      dispatch(calculateTotals(products));
+    }
+  }, [cartItems, products, dispatch]);
+
+  const updateQuantity = (productId, size, newQuantity) => {
+    if (newQuantity <= 0) return;
+    dispatch(updateCartQuantity({ productId, size, quantity: newQuantity }));
+  };
+
+  const removeItem = (productId, size) => {
+    dispatch(removeFromCart({ productId, size }));
+  };
 
   const isCartEmpty = !Object.keys(cartItems).length;
 
@@ -51,14 +79,12 @@ export function CartPage() {
                 key={`${productId}-${size}`}
                 className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm"
               >
-                {/* Product Image */}
                 <img
                   src={product.image?.[0]}
                   alt={product.name}
                   className="w-24 h-24 object-cover rounded-md"
                 />
 
-                {/* Product Details */}
                 <div className="flex-1">
                   <h3 className="font-semibold">{product.name}</h3>
                   <p className="text-sm text-gray-500">📏 Size: {size}</p>
@@ -68,34 +94,25 @@ export function CartPage() {
                   </p>
                 </div>
 
-                {/* Quantity Controls */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() =>
-                      updateQuantity(productId, size, Math.max(1, quantity - 1))
-                    }
+                    onClick={() => updateQuantity(productId, size, quantity - 1)}
                     className="p-1 rounded-md hover:bg-gray-100"
-                    aria-label="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="w-8 text-center">{quantity}</span>
                   <button
-                    onClick={() =>
-                      updateQuantity(productId, size, quantity + 1)
-                    }
+                    onClick={() => updateQuantity(productId, size, quantity + 1)}
                     className="p-1 rounded-md hover:bg-gray-100"
-                    aria-label="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Remove Item */}
                 <button
                   onClick={() => removeItem(productId, size)}
                   className="p-2 text-red-500 hover:bg-red-50 rounded-md"
-                  aria-label="Remove item"
                 >
                   <Trash2 className="h-5 w-5" />
                 </button>
@@ -131,14 +148,19 @@ export function CartPage() {
             </div>
 
             <Link
-              to="/checkout"
-              className="block w-full bg-blue-600 text-white text-center px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+              to={total < 43 ? '#' : '/checkout'}
+              className={`block w-full text-center px-6 py-3 rounded-md transition-colors
+                ${total < 43
+                  ? 'bg-gray-400 cursor-not-allowed text-white'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              onClick={e => total < 43 && e.preventDefault()}
             >
               ✅ Proceed to Checkout
             </Link>
 
             <button
-              onClick={clearCart}
+              onClick={() => dispatch(clearCart())}
               className="block w-full text-gray-600 text-center px-6 py-3 rounded-md hover:bg-gray-100 transition-colors"
             >
               🗑️ Clear Cart
@@ -149,3 +171,5 @@ export function CartPage() {
     </div>
   );
 }
+
+export default CartPage;

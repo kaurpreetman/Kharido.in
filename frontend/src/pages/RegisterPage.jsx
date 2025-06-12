@@ -1,10 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { z } from 'zod';
 import { useGoogleLogin } from '@react-oauth/google';
-import { ShopContext } from '../context/ShopContext';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../context/userSlice';
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -17,7 +18,8 @@ const registerSchema = z.object({
 });
 
 export function RegisterPage() {
-  const { login } = useContext(ShopContext);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -33,15 +35,19 @@ export function RegisterPage() {
       setLoading(true);
       setErrors({});
 
-      const res = await axios.post('http://localhost:5000/api/auth/signup', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      }, { withCredentials: true });
+      const res = await axios.post(
+        'http://localhost:5000/api/auth/signup',
+        {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        },
+        { withCredentials: true }
+      );
 
-      login(res.data.user, res.data.token);
+      dispatch(setUser(res.data.user));
       toast.success(res.data.message || 'Registered successfully!');
-      window.location.href = '/';
+      navigate('/');
     } catch (err) {
       if (err instanceof z.ZodError) {
         const formErrors = err.errors.reduce((acc, cur) => ({ ...acc, [cur.path[0]]: cur.message }), {});
@@ -59,13 +65,15 @@ export function RegisterPage() {
       try {
         const accessToken = tokenResponse.access_token;
 
-        const res = await axios.post('http://localhost:5000/api/auth/google-signup', {
-          token: accessToken,
-        }, { withCredentials: true });
+        const res = await axios.post(
+          'http://localhost:5000/api/auth/google-signup',
+          { token: accessToken },
+          { withCredentials: true }
+        );
 
-        login(res.data.user, res.data.token);
+        dispatch(setUser(res.data.user));
         toast.success('Logged in with Google!');
-        window.location.href = '/';
+        navigate('/');
       } catch (err) {
         console.error('Google login error:', err);
         toast.error(err.response?.data?.message || 'Google login failed');
@@ -84,7 +92,7 @@ export function RegisterPage() {
           <Link to="/login" className="text-blue-600 hover:underline">Sign in</Link>
         </p>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           {['name', 'email', 'password', 'confirmPassword'].map((field) => (
             <div key={field}>
               <input
@@ -97,11 +105,11 @@ export function RegisterPage() {
                 }
                 value={formData[field]}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors[field] ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors[field] && <p className="text-red-500 text-sm">{errors[field]}</p>}
+              {errors[field] && <p className="text-red-500 text-sm mt-1">{errors[field]}</p>}
             </div>
           ))}
 

@@ -1,30 +1,30 @@
-
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight , Star } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
-import { ShopContext } from '../context/ShopContext';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
+import HeroBanner  from '../components/ui/HeroBanner';
 import OurPolicy from '../components/OurPolicy';
-
+import { fetchBestsellers } from '../context/productSlice'
 export const HomePage = () => {
-  const { fetchBestsellers,bestsellers } = useContext(ShopContext);
+  const dispatch = useDispatch();
+  const bestsellers = useSelector((state) => state.product.bestsellers);
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
-    
- useEffect(() => {
-  fetchBestsellers();
-}, []);
-
 useEffect(() => {
-  setFeaturedProducts(bestsellers.slice(0,4));
-}, [bestsellers]);
+  console.log("dispatching bestsellers");
+  dispatch(fetchBestsellers());
+}, [dispatch]);
 
- console.log(featuredProducts)
+  useEffect(() => {
+    setFeaturedProducts(bestsellers.slice(0, 4));
+  }, [bestsellers]);
+
   return (
     <div className="space-y-16 py-8">
       {/* Hero Section */}
-      <section className="relative h-[500px] bg-gradient-to-r from-blue-600 to-blue-800">
+      {/* <section className="relative h-[500px] bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="container h-full flex items-center">
           <div className="max-w-2xl text-white">
             <h1 className="text-5xl font-bold mb-6">
@@ -41,33 +41,34 @@ useEffect(() => {
             </Link>
           </div>
         </div>
-      </section>
-
-      
+      </section> */}
+      <HeroBanner />
 
       {/* Featured Products */}
-      <section className="container">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold">⭐ Bestsellers of the week</h2>
-          <Link
-            to="/bestseller"
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            View All →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
-      </section>
-       
+     <section className="container mx-auto px-4">
+  <div className="flex items-center justify-between mb-8">
+    <div className="flex items-center gap-2">
+      <Star className="h-6 w-6 text-yellow-500" />
+      <h2 className="text-2xl font-semibold text-gray-800">Bestsellers This Week</h2>
+    </div>
+    <Link
+      to="/bestseller"
+      className="text-sm text-blue-600 hover:underline transition"
+    >
+      View All
+    </Link>
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    {featuredProducts.map((product) => (
+      <ProductCard key={product._id} product={product} />
+    ))}
+  </div>
+</section>
       {/* Shop by Category */}
       <section className="container">
         <h2 className="text-3xl font-bold mb-8">🧭 Shop by Category</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Category 1 */}
           <Link to="/products?category=Electronics" className="relative h-64 rounded-lg overflow-hidden group shadow-md">
             <img
               src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
@@ -79,7 +80,6 @@ useEffect(() => {
             </div>
           </Link>
 
-          {/* Category 2 */}
           <Link to="/products?category=Fashion" className="relative h-64 rounded-lg overflow-hidden group shadow-md">
             <img
               src="https://images.unsplash.com/photo-1521334884684-d80222895322"
@@ -91,8 +91,7 @@ useEffect(() => {
             </div>
           </Link>
 
-          {/* Category 3 */}
-          <Link to="/products?category=Home & Living" className="relative h-64 rounded-lg overflow-hidden group shadow-md">
+          <Link to={`/products?category=${encodeURIComponent('Home & Living')}`} className="relative h-64 rounded-lg overflow-hidden group shadow-md">
             <img
               src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85"
               alt="Home & Living"
@@ -103,9 +102,8 @@ useEffect(() => {
             </div>
           </Link>
         </div>
-          <OurPolicy/>
+        <OurPolicy />
       </section>
-       
     </div>
   );
 };

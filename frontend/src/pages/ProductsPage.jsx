@@ -1,28 +1,44 @@
-// ProductsPage.jsx
-import React, { useEffect, useState, useContext } from 'react';
-import { ShopContext } from '../context/ShopContext.jsx';
-import { ProductCard } from '../components/ui/ProductCard.jsx';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { ProductCard } from '../components/ui/ProductCard';
+import { fetchProducts } from '../context/productSlice';
+
+import { useLocation } from 'react-router-dom';
 
 export const ProductsPage = () => {
-  const { products, search, fetchProducts } = useContext(ShopContext);
+  const dispatch = useDispatch();
+  const { products, loading } = useSelector((state) => state.product);
+  const search = useSelector((state) => state.ui.search);
+
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortOrder, setSortOrder] = useState('relevant');
 
   const categoriesWithSubcategories = {
-  All: [],
-  Electronics: ['Mobiles', 'Laptops', 'Accessories'],
-  Fashion: ['Men', 'Women', 'Footwear'],
-  'Home & Living': ['Furniture', 'Kitchen', 'Lighting'],
-  Sports: ['Gym Equipment', 'Sportswear', 'Footwear'],
-  Beauty: ['Skincare', 'Makeup', 'Fragrances'],
-  Books: ['Fiction', 'Non-Fiction', 'Children’s Books'],
-};
+    All: [],
+    Electronics: ['Mobiles', 'Laptops', 'Accessories'],
+    Fashion: ['Men', 'Women', 'Footwear'],
+    'Home & Living': ['Furniture', 'Kitchen', 'Lighting'],
+    Sports: ['Gym Equipment', 'Sportswear', 'Footwear'],
+    Beauty: ['Skincare', 'Makeup', 'Fragrances'],
+    Books: ['Fiction', 'Non-Fiction', 'Children’s Books'],
+  };
+
+  // 👉 Get category from query string on first render
+  const useQuery = () => new URLSearchParams(useLocation().search);
+  const query = useQuery();
 
   useEffect(() => {
-    fetchProducts();
+    const categoryFromURL = query.get('category');
+    if (categoryFromURL && categoriesWithSubcategories[categoryFromURL]) {
+      setSelectedCategory(categoryFromURL);
+    }
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
   useEffect(() => {
     let filtered = products;
@@ -52,6 +68,7 @@ export const ProductsPage = () => {
 
     setFilteredProducts(filtered);
   }, [products, selectedCategory, selectedSubcategory, sortOrder, search]);
+
 
   return (
     <div className="container py-8">
@@ -115,7 +132,9 @@ export const ProductsPage = () => {
 
         <main className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {filteredProducts.length ? (
+            {loading ? (
+              <p>Loading...</p>
+            ) : filteredProducts.length ? (
               filteredProducts.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))

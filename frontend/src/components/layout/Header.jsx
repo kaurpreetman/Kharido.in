@@ -1,23 +1,25 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ShoppingCart,
-  Lock,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { ShoppingCart, Lock, LogOut, Menu, X } from "lucide-react";
 import { SearchBar } from "../ui/SearchBar";
-import { ShopContext } from "../../context/ShopContext.jsx";
 import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutUser,fetchUser } from "../../context/userSlice"; // make sure this action exists
 
 export const Header = () => {
-  const { totalCount } = useContext(ShopContext);
+  const dispatch = useDispatch();
 
- const { user, logout } = useContext(ShopContext);
-const isAdmin = user?.isAdmin || false;
+  // ⬇ Redux selectors
+const user = useSelector((state) => state.user.user);
+const authLoading = useSelector((state) => state.user.authLoading);
+  const totalCount = useSelector((state) => state.cart.totalCount);
 
+  const isAdmin = user?.isAdmin || false;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -27,7 +29,7 @@ const isAdmin = user?.isAdmin || false;
           to="/"
           className="text-2xl font-extrabold text-blue-600 hover:text-blue-800 transition duration-300"
         >
-          🛍️ ForEver
+          🛍️ Shopstore
         </Link>
 
         {/* Desktop Search */}
@@ -38,37 +40,35 @@ const isAdmin = user?.isAdmin || false;
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-5">
           {user ? (
-  <Link to="/products" className="hover:text-blue-600 transition-colors">
-    🧾 Products
-  </Link>
-) : (
-  <span
-    onClick={() => toast.info("Please login to view products")}
-    className="hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
-  >
-    🧾 Products
-  </span>
-)}
-
+            <Link to="/products?category=All" className="hover:text-blue-600 transition-colors">
+              🧾 Products
+            </Link>
+          ) : (
+            <span
+              onClick={() => toast.info("Please login to view products")}
+              className="hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
+            >
+              🧾 Products
+            </span>
+          )}
 
           {user ? (
-  <Link to="/cart" className="relative hover:text-blue-600 transition-colors">
-    <ShoppingCart />
-    {totalCount > 0 && (
-      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
-        {totalCount}
-      </span>
-    )}
-  </Link>
-) : (
-  <span
-    onClick={() => toast.info("Please login to access your cart")}
-    className="relative hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
-  >
-    <ShoppingCart />
-  </span>
-)}
-
+            <Link to="/cart" className="relative hover:text-blue-600 transition-colors">
+              <ShoppingCart />
+              {totalCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                  {totalCount}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <span
+              onClick={() => toast.info("Please login to access your cart")}
+              className="relative hover:text-blue-600 cursor-not-allowed opacity-50 transition-colors"
+            >
+              <ShoppingCart />
+            </span>
+          )}
 
           {isAdmin && (
             <Link
@@ -82,8 +82,7 @@ const isAdmin = user?.isAdmin || false;
 
           {user ? (
             <button
-             onClick={logout}
-
+              onClick={handleLogout}
               className="flex items-center gap-1 text-white bg-blue-600 px-3 py-1.5 rounded-md hover:bg-blue-700"
             >
               <LogOut size={16} />
@@ -115,38 +114,40 @@ const isAdmin = user?.isAdmin || false;
         <div className="md:hidden bg-white shadow-lg px-6 pb-6 space-y-4">
           <SearchBar />
           {user ? (
-  <Link to="/products" className="block hover:text-blue-600">🧾 Products</Link>
-) : (
-  <span
-    onClick={() => toast.info("Please login to view products")}
-    className="block text-gray-400 cursor-not-allowed"
-  >
-    🧾 Products
-  </span>
-)}
+            <Link to="/products" className="block hover:text-blue-600">
+              🧾 Products
+            </Link>
+          ) : (
+            <span
+              onClick={() => toast.info("Please login to view products")}
+              className="block text-gray-400 cursor-not-allowed"
+            >
+              🧾 Products
+            </span>
+          )}
 
-{user ? (
-  <Link to="/cart" className="block hover:text-blue-600 flex items-center gap-2">
-    🛒 Cart ({totalCount})
-  </Link>
-) : (
-  <span
-    onClick={() => toast.info("Please login to access your cart")}
-    className="block text-gray-400 cursor-not-allowed"
-  >
-    🛒 Cart
-  </span>
-)}
+          {user ? (
+            <Link to="/cart" className="block hover:text-blue-600 flex items-center gap-2">
+              🛒 Cart ({totalCount})
+            </Link>
+          ) : (
+            <span
+              onClick={() => toast.info("Please login to access your cart")}
+              className="block text-gray-400 cursor-not-allowed"
+            >
+              🛒 Cart
+            </span>
+          )}
 
           {isAdmin && (
             <Link to="/admin" className="block hover:text-blue-600 flex items-center gap-2">
-               Dashboard
+              Dashboard
             </Link>
           )}
+
           {user ? (
             <button
-              onClick={logout}
-
+              onClick={handleLogout}
               className="block w-full text-left bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               🚪 Logout

@@ -6,6 +6,7 @@ import {
   placeOrderRazorpay,
   allOrders,
   getUserOrders,
+  cancelOrder,
   updateStatus,
   returnOrder,
   cancelOrder,  // ✅ ADD THIS
@@ -17,8 +18,10 @@ import Order from '../models/order.model.js';
 const router = express.Router();
 
 // ADMIN FEATURES
-router.post('/list',allOrders); // ✅ You can add admin middleware here later
-router.post('/status',updateStatus); // ✅ Should be admin-protected ideally
+// Protect with authentication, and optionally, check for admin
+router.post('/list',protectRoute, allOrders);
+router.post('/cancel',protectRoute, cancelOrder);
+router.post('/status',protectRoute, updateStatus); // Should be admin-protected ideally
 
 // PAYMENT FEATURE
 router.post('/cod', protectRoute, placeOrder);
@@ -31,25 +34,23 @@ router.post('/verifyStripe', protectRoute, verifyStripe);
 // USER FEATURES
 router.get('/user/:id', protectRoute, getUserOrders);
 
-// GET ORDER BY ID
-router.get('/:id', protectRoute, async (req, res) => {
+// GET /api/orders/:userId/:orderId
+router.get('/:userId/:orderId', async (req, res) => {
+  const { userId, orderId } = req.params;
+
   try {
-    const order = await Order.findById(req.params.id).populate('products.product');
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findOne({ _id: orderId, user: userId }).populate("products.product");
+    console.log(order);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
-    // Optional ownership check
-    // if (req.user._id.toString() !== order.user.toString()) {
-    //   return res.status(403).json({ message: 'Unauthorized access' });
-    // }
-
-    res.json({ order });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(200).json({ order });
+  } catch (error) {
+    console.error("Order fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch order" });
   }
 });
 
-// ✅ ADD THESE ROUTES FOR RETURN & CANCEL
-router.post('/return', protectRoute, returnOrder);
-router.post('/cancel', protectRoute, cancelOrder);
 
 export default router;

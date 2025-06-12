@@ -1,44 +1,25 @@
 import React, { createContext, useEffect, useState } from "react";
 import axios from "axios";
-//import {products} from '../assets/assets';
 import { toast } from "react-toastify";
-import {useNavigate} from "react-router-dom";
-// Create context
+
 export const ShopContext = createContext();
 
-// Setup Axios interceptor once (outside the provider component)
 axios.defaults.withCredentials = true;
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 const ShopContextProvider = ({ children }) => {
-  // States
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-const [bestsellers, setBestsellers] = useState([]);
+  const [user, setUser] = useState(null);
+  const [bestsellers, setBestsellers] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [total, setTotal] = useState(0);
+    const [authLoading, setAuthLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [lastOrder, setLastOrder] = useState(null);
-
   const delivery_fee = 10.0;
   const currency = "$";
-  const [token,setToken]=useState('');
-  //const backendurl=import.meta.env.REACT_APP_SERVER_URL
-  // Address states
+
   const [addresses, setAddresses] = useState(() => {
     const saved = localStorage.getItem("addresses");
     return saved ? JSON.parse(saved) : [];
@@ -49,90 +30,102 @@ const [bestsellers, setBestsellers] = useState([]);
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Fetch Products
+  // 🔄 Auto-fetch current user on initial load
+   useEffect(() => {
+    let newSubtotal = 0;
+    let newTotalCount = 0;
+    Object.entries(cartItems).forEach(([productId, sizeMap]) => {
+      const product = products.find((p) => p._id === productId);
+      if (!product) return;
+      Object.entries(sizeMap).forEach(([size, qty]) => {
+        newSubtotal += product.price * qty;
+        newTotalCount += qty;
+      });
+    });
+    setSubtotal(newSubtotal);
+    setTotalCount(newTotalCount);
+    setTotal(newSubtotal + delivery_fee);
+  }, [cartItems]);
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/auth/profile', {
+        withCredentials: true,
+      });
+      setUser(res.data.user);
+    } catch (err) {
+      setUser(null); // optional: log out
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/products/all");
-       
-        setProducts(res.data.products);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-        toast.error("Failed to load products");
-      }
-    };
+  useEffect(() => {
+    fetchUser(); 
 
- 
-  // Fetch Cart
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/products/all");
+      setProducts(res.data.products);
+      await fetchCart();
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+      toast.error("Failed to load products");
+    }
+  };
+
   const fetchCart = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/cart");
       const items = {};
-
       res.data.forEach(({ product, size, quantity }) => {
         if (!items[product]) items[product] = {};
         items[product][size] = quantity;
       });
 
       setCartItems(items);
+  
     } catch (err) {
       console.error("Error fetching cart", err);
     }
   };
-const fetchBestsellers = async () => {
-  try {
-    const res = await axios.get("http://localhost:5000/api/products/bestseller");
-    if (res.data.success) {
-      console.log(res.data.data);
-      setBestsellers(res.data.data); // Only first 4
-    } else {
-      toast.error("Failed to load bestsellers");
+
+  const fetchBestsellers = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/products/bestseller");
+      if (res.data.success) {
+        setBestsellers(res.data.data);
+      } else {
+        toast.error("Failed to load bestsellers");
+      }
+    } catch (err) {
+      console.error("Error fetching bestsellers:", err);
+      toast.error("Error loading bestsellers");
     }
-  } catch (err) {
-    console.error("Error fetching bestsellers:", err);
-    toast.error("Error loading bestsellers");
-  }
-};
-  // Sync cart when user logs in
-  
+  };
 
-  // Calculate totals
-  useEffect(() => {
-    let newSubtotal = 0;
-    let newTotalCount = 0;
+ 
 
-    Object.entries(cartItems).forEach(([productId, sizeMap]) => {
-      const product = products.find((p) => p._id === productId);
-      if (!product) return;
-
-      Object.entries(sizeMap).forEach(([size, qty]) => {
-        newSubtotal += product.price * qty;
-        newTotalCount += qty;
-      });
-    });
-
-    setSubtotal(newSubtotal);
-    setTotalCount(newTotalCount);
-    setTotal(newSubtotal + delivery_fee);
-  }, [cartItems]);
-
-  // Auth
-  const login = (userData) => {
+  // ✅ Set user on login (do NOT store in localStorage)
+  const login =(userData) => {
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", userData.token);
-    toast.success("Logged in successfully!");
+      
+ 
   };
 
-  const logout = () => {
-    setUser(null);
-    setCartItems({});
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    toast.info("Logged out!");
+  // ✅ Logout by clearing server cookie + client state
+  const logout = async () => {
+    try {
+      await axios.post("http://localhost:5000/api/auth/logout");
+      setUser(null);
+      setCartItems({});
+      toast.info("Logged out!");
+    } catch (err) {
+      toast.error("Logout failed");
+    }
   };
 
-  // Cart Actions
   const addToCart = async (productId, size) => {
     try {
       await axios.post("http://localhost:5000/api/cart/add", { productId, size });
@@ -163,7 +156,7 @@ const fetchBestsellers = async () => {
       await axios.delete("http://localhost:5000/api/cart/remove", {
         data: { productId, size },
       });
-      await fetchCart();
+      fetchCart();
       toast.success("Item removed");
     } catch (err) {
       console.error("Error removing item", err);
@@ -182,11 +175,10 @@ const fetchBestsellers = async () => {
     }
   };
 
-  // Products
   const getSingleProduct = async (productId) => {
     try {
-      const res = await axios.post(`http://localhost:5000/api/products/getsingle`,{
-        productId
+      const res = await axios.post("http://localhost:5000/api/products/getsingle", {
+        productId,
       });
       return res.data.product;
     } catch (error) {
@@ -195,12 +187,9 @@ const fetchBestsellers = async () => {
     }
   };
 
-  // Orders
   const getUserOrders = async (id) => {
     try {
       const res = await axios.get(`http://localhost:5000/api/orders/user/${id}`);
-   
-       
       return res.data;
     } catch (error) {
       throw new Error(
@@ -209,7 +198,6 @@ const fetchBestsellers = async () => {
     }
   };
 
-  // Address Management
   const addAddress = (newAddress) => {
     const updated = [...addresses, newAddress];
     setAddresses(updated);
@@ -233,9 +221,7 @@ const fetchBestsellers = async () => {
     setSelectedAddress(addr);
     localStorage.setItem("selectedAddress", JSON.stringify(addr));
   };
- 
 
- 
   return (
     <ShopContext.Provider
       value={{
@@ -244,12 +230,10 @@ const fetchBestsellers = async () => {
         cartItems,
         fetchCart,
         getSingleProduct,
-        
         addToCart,
         updateQuantity,
         removeItem,
         clearCart,
-        fetchCart,
         user,
         login,
         logout,
@@ -264,17 +248,16 @@ const fetchBestsellers = async () => {
         subtotal,
         totalCount,
         total,
+        authLoading,
         delivery_fee,
         currency,
         search,
         setSearch,
         lastOrder,
         setLastOrder,
-      getUserOrders,
-      bestsellers,
-    fetchBestsellers,
-        //backendurl,
-        
+        getUserOrders,
+        bestsellers,
+        fetchBestsellers,
       }}
     >
       {children}
