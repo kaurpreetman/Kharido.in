@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ProductCard } from '../components/ui/ProductCard';
 import { fetchProducts } from '../context/productSlice';
-
 import { useLocation } from 'react-router-dom';
 
 export const ProductsPage = () => {
@@ -25,7 +24,6 @@ export const ProductsPage = () => {
     Books: ['Fiction', 'Non-Fiction', 'Children’s Books'],
   };
 
-  // 👉 Get category from query string on first render
   const useQuery = () => new URLSearchParams(useLocation().search);
   const query = useQuery();
 
@@ -69,11 +67,11 @@ export const ProductsPage = () => {
     setFilteredProducts(filtered);
   }, [products, selectedCategory, selectedSubcategory, sortOrder, search]);
 
-
   return (
-    <div className="container py-8">
-      <div className="flex gap-8">
-        <aside className="w-64 space-y-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar */}
+        <aside className="lg:w-64 w-full bg-white dark:bg-dark-800 p-4 rounded-lg shadow-md">
           <div>
             <h3 className="text-lg font-semibold mb-3">Categories</h3>
             <div className="space-y-2">
@@ -89,7 +87,7 @@ export const ProductsPage = () => {
                         setSelectedCategory(category);
                         setSelectedSubcategory(null);
                       }}
-                      className="text-primary-600 focus:ring-primary-500"
+                      className="accent-primary-600"
                     />
                     <span className="ml-2 font-medium">{category}</span>
                   </label>
@@ -104,7 +102,7 @@ export const ProductsPage = () => {
                               value={subcategory}
                               checked={selectedSubcategory === subcategory}
                               onChange={() => setSelectedSubcategory(subcategory)}
-                              className="text-primary-600 focus:ring-primary-500"
+                              className="accent-primary-600"
                             />
                             <span className="ml-2">{subcategory}</span>
                           </label>
@@ -116,10 +114,10 @@ export const ProductsPage = () => {
             </div>
           </div>
 
-          <div>
+          <div className="mt-6">
             <h3 className="text-lg font-semibold mb-3">Sort by Price</h3>
             <select
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-md dark:bg-dark-700 dark:border-dark-600"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
             >
@@ -130,8 +128,9 @@ export const ProductsPage = () => {
           </div>
         </aside>
 
+        {/* Products grid */}
         <main className="flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
             {loading ? (
               <p>Loading...</p>
             ) : filteredProducts.length ? (

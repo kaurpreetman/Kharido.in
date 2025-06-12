@@ -8,6 +8,7 @@ import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/utils/ProtectedRoute';
 
 import { fetchUser } from './context/userSlice';
+import { setTheme } from './context/themeSlice';
 import './App.css';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage as ShopProductsPage } from './pages/ProductsPage';
@@ -20,22 +21,67 @@ import { RegisterPage } from './pages/RegisterPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { BestSellers } from './pages/BestSeller';
 import FAQ from './pages/FAQ';
+const clientId = import.meta.env.VITE_CLIENT_ID;
 
 function App() {
   const dispatch = useDispatch();
   const { user, authLoading } = useSelector((state) => state.user);
+  const theme = useSelector((state) => state.theme.mode);
 
   useEffect(() => {
     dispatch(fetchUser());
+    
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      dispatch(setTheme(savedTheme));
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      dispatch(setTheme(prefersDark ? 'dark' : 'light'));
+    }
   }, [dispatch]);
 
-  if (authLoading) return <div>Loading...</div>;
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    // Apply theme to body as well
+    document.body.className = theme === 'dark' 
+      ? 'bg-dark-900 text-gray-100 theme-transition' 
+      : 'bg-gray-50 text-gray-900 theme-transition';
+  }, [theme]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900 theme-transition">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full animate-spin mx-auto mb-6"></div>
+            <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-secondary-600 dark:border-t-secondary-400 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">Loading your experience...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Please wait while we prepare everything for you</p>
+        </div>
+      </div>
+    );
+  }
 
   const isLoggedIn = !!user;
 
   return (
-    <div>
-      <ToastContainer />
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 theme-transition">
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={theme}
+        toastClassName="backdrop-blur-sm"
+        className="mt-16"
+      />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
@@ -92,12 +138,11 @@ function App() {
 
          <Route path="/order-success/:userId/:orderId" element={<OrderConfirmationPage />} />
 
-
           {/* Public Routes */}
           <Route
             path="login"
             element={
-              <GoogleOAuthProvider clientId='889165511247-v2r6frdj65fhfabrjh5r71e5ngstmjhl.apps.googleusercontent.com'>
+              <GoogleOAuthProvider clientId={clientId}>
                 <LoginPage />
               </GoogleOAuthProvider>
             }
