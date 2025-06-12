@@ -1,64 +1,45 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-import { backendUrl } from '../App';
-import { toast } from 'react-toastify';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  // Initialize user from localStorage if exists
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // 🟡 Needed for ProtectedRoute
 
-  // Sync user state changes to localStorage
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
-  const login = async (email, password) => {
-    try {
-      const response = await axios.post(
-        `${backendUrl}/api/auth/adlogin`,
-        { email, password },
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        setUser(response.data.user); // store user info in state and localStorage
-        toast.success('Logged in successfully');
-        return { success: true };
-      } else {
-        toast.error(response.data.message);
-        return { success: false, message: response.data.message };
+    const storedUser = localStorage.getItem('shopstore_user');
+    if (storedUser) {
+      try {
+       setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('shopstore_user');
       }
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      toast.error(message);
-      return { success: false, message };
     }
+    setLoading(false); // ✅ Done checking localStorage
+  }, []);
+
+  const login = (userData) => {
+   setUser(userData);
+  localStorage.setItem('shopstore_user', JSON.stringify(userData));
   };
 
-  const logout = async () => {
-    try {
-      await axios.post(`${backendUrl}/api/auth/logout`, {}, { withCredentials: true });
-      setUser(null); // clears state and triggers removal from localStorage via useEffect
-      toast.success('Logged out successfully');
-    } catch (error) {
-      toast.error('Failed to logout');
-    }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('shopstore_user');
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, login, logout }}>
+    <UserContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+};
