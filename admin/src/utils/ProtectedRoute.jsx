@@ -1,10 +1,8 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ isAllowed, children }) => {
-  if (!isAllowed) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
+const ProtectedRoute = ({ children, isAllowed }) => {
+  return isAllowed ? children : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;
