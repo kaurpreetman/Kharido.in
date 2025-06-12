@@ -7,9 +7,8 @@ import {
   allOrders,
   getUserOrders,
   cancelOrder,
-  updateStatus,
   returnOrder,
-  cancelOrder,  // ✅ ADD THIS
+  updateStatus,
 } from '../controllers/order.controller.js';
 
 import { protectRoute } from "../middleware/auth.middleware.js";
@@ -19,19 +18,19 @@ const router = express.Router();
 
 // ADMIN FEATURES
 // Protect with authentication, and optionally, check for admin
-router.post('/list',protectRoute, allOrders);
+router.get('/list',protectRoute, allOrders);
 router.post('/cancel',protectRoute, cancelOrder);
-router.post('/status',protectRoute, updateStatus); // Should be admin-protected ideally
-
-// PAYMENT FEATURE
+router.put('/status',protectRoute, updateStatus); // Should be admin-protected ideally
+router.post('/return',protectRoute,returnOrder);
+// PAYMENT FEATURE (may not require login depending on your use case)
 router.post('/cod', protectRoute, placeOrder);
 router.post('/stripe', protectRoute, placeOrderStripe);
 router.post('/razorpay', protectRoute, placeOrderRazorpay);
 
-// VERIFY STRIPE PAYMENT
+// VERIFY STRIPE PAYMENT (must be protected)
 router.post('/verifyStripe', protectRoute, verifyStripe);
 
-// USER FEATURES
+// USER FEATURES (get orders for a specific user)
 router.get('/user/:id', protectRoute, getUserOrders);
 
 // GET /api/orders/:userId/:orderId

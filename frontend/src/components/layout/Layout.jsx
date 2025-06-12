@@ -15,16 +15,16 @@ export const Layout = () => {
 
   if (authLoading) {
     return (
-      <div className="h-screen flex justify-center items-center text-lg">
+      <div className="h-screen flex justify-center items-center text-lg bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 theme-transition">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-900 theme-transition">
       <Header />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-gray-50 dark:bg-dark-900 theme-transition">
         <Outlet />
       </main>
       <Footer />

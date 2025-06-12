@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { useSelector, useDispatch } from 'react-redux';
+import { ShoppingBag, CreditCard, MapPin } from 'lucide-react';
 
 import { CheckoutForm } from '../components/checkout/CheckoutForm';
 import { OrderSummary } from '../components/checkout/OrderSummary';
@@ -41,7 +42,7 @@ export const CheckoutPage = () => {
 
   const initRazorpay = (orderRes, orderData) => {
     const options = {
-      key: import.meta.env.RAZORPAY_KEY_ID,
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: orderRes.totalAmount * 100,
       currency: 'INR',
       name: 'Order Payment',
@@ -62,7 +63,6 @@ export const CheckoutPage = () => {
           );
 
           toast.success('🎉 Payment successful and verified!');
-     
           dispatch(setLastOrder(orderData));
           navigate(`/order-success?${user._id}/${orderData._id}`);
         } catch (error) {
@@ -126,28 +126,23 @@ export const CheckoutPage = () => {
 
       let response;
 
-      // 🚀 Handle payment based on method
       if (paymentMethod === 'razorpay') {
         response = await axios.post('http://localhost:5000/api/orders/razorpay', order, { withCredentials: true });
         initRazorpay(response.data, response.data.order);
-        return; // Don't proceed further
+        return;
       }
       
       if (paymentMethod === 'stripe') {
         response = await axios.post('http://localhost:5000/api/orders/stripe', order, { withCredentials: true });
-        const stripe = await loadStripe('pk_test_51QXe1dKyzyrm8ods7sdlcAVHULekjEx3E9yarZTqSAhJ7KLmiA6AR7DUasY4jSVzm5yuAcDl58QBURibaCr9iLYp00Qmmmjtjx');
+        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
         await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
         return;
       }
 
-      // 💸 COD (no gateway)
       if (paymentMethod === 'cash_on_delivery') {
         response = await axios.post('http://localhost:5000/api/orders/cod', order, { withCredentials: true });
-
         toast.success('🎉 Order placed successfully!');
-       
-       navigate(`/order-success/${user._id}/${response.data.order._id}`);
-
+        navigate(`/order-success/${user._id}/${response.data.order._id}`);
         return;
       }
 
@@ -161,36 +156,65 @@ export const CheckoutPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 lg:px-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">🛒 Checkout</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">📍 Shipping Address</h2>
-            <CheckoutForm loading={loading} />
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 theme-transition">
+      <div className="container mx-auto py-8 px-4 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <ShoppingBag className="w-10 h-10 text-primary-600 dark:text-primary-400" />
+            <h1 className="text-4xl font-display font-bold gradient-text">Checkout</h1>
           </div>
+          <p className="text-xl text-gray-600 dark:text-gray-400">Complete your order and get ready for delivery</p>
+        </div>
 
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">💳 Payment Method</h2>
-            <PaymentSection selectedMethod={paymentMethod} onSelectMethod={setPaymentMethod} />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Shipping Address */}
+            <div className="card p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <MapPin className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Shipping Address</h2>
+              </div>
+              <CheckoutForm loading={loading} />
+            </div>
 
-          <div className="mt-8">
+            {/* Payment Method */}
+            <div className="card p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <CreditCard className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Payment Method</h2>
+              </div>
+              <PaymentSection selectedMethod={paymentMethod} onSelectMethod={setPaymentMethod} />
+            </div>
+
+            {/* Place Order Button */}
             <button
               onClick={handlePlaceOrder}
-              className={`w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors ${
-                loading || !selectedAddress || !paymentMethod ? 'opacity-50 cursor-not-allowed' : ''
+              className={`w-full py-4 text-lg font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                loading || !selectedAddress || !paymentMethod 
+                  ? 'bg-gray-300 dark:bg-dark-600 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+                  : 'btn-primary shadow-xl hover:shadow-2xl'
               }`}
               disabled={loading || !selectedAddress || !paymentMethod}
             >
-              {loading ? '⏳ Processing...' : '🛍️ Place Order'}
+              {loading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="spinner w-6 h-6"></div>
+                  Processing...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  <ShoppingBag className="w-6 h-6" />
+                  Place Order
+                </div>
+              )}
             </button>
           </div>
-        </div>
 
-        <div className="bg-gray-50 shadow-md rounded-lg p-6 lg:sticky lg:top-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">📦 Order Summary</h2>
-          <OrderSummary />
+          {/* Order Summary */}
+          <div className="card p-8 h-fit sticky top-8">
+            <h2 className="text-2xl font-semibold mb-6 gradient-text">Order Summary</h2>
+            <OrderSummary />
+          </div>
         </div>
       </div>
     </div>

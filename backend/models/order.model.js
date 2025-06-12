@@ -17,7 +17,7 @@ const orderSchema = new mongoose.Schema(
         },
         size: {
   type: String,
-  required: false, 
+
 },
         quantity: {
           type: Number,
@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled","Returned"],
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled","returned"],
       default: "pending",
     },
     paymentMethod: {

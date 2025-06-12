@@ -227,7 +227,7 @@ const getUserOrders = async (req, res) => {
       .populate({
         path: 'products.product',
         model: 'Product',
-        select: 'name' // ✅ only fetch name (you can add price, image etc. too)
+        select: 'name image price' // ✅ only fetch name (you can add price, image etc. too)
       });
 
     res.status(200).json(orders);
@@ -239,10 +239,10 @@ const getUserOrders = async (req, res) => {
 
 // Return order
 const returnOrder = async (req, res) => {
-  const { orderId, userId } = req.body;
+  const { orderId } = req.body;
 
   try {
-    const order = await Order.findOne({ _id: orderId, user: userId });
+    const order = await Order.findOne({ _id: orderId, user: req.user._id });
 
     if (!order || order.isReturned) {
       return res.status(404).json({ message: "Order not found or already returned" });
@@ -259,7 +259,7 @@ const returnOrder = async (req, res) => {
       return res.status(400).json({ message: "Return window expired" });
     }
 
-    order.isReturned = true;
+    order.status = "returned";
     await order.save();
 
     res.status(200).json({ message: "Product returned successfully" });
@@ -270,10 +270,10 @@ const returnOrder = async (req, res) => {
 
 // Cancel order
 const cancelOrder = async (req, res) => {
-  const { orderId, userId } = req.body;
+  const { orderId } = req.body;
 
   try {
-    const order = await Order.findOne({ _id: orderId, user: userId });
+    const order = await Order.findOne({ _id: orderId, user: req.user._id });
 
     if (!order || order.isCancelled) {
       return res.status(404).json({ message: "Order not found or already cancelled" });

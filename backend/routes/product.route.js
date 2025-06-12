@@ -32,14 +32,14 @@ router.post(
 );
 
 // 📦 PRODUCT MANAGEMENT ROUTES
-router.post('/getsingle', singleProduct);
+router.post('/getsingle', protectRoute,singleProduct);
 
 
-router.get('/bestseller',  getBestsellerProducts );
-router.get('/category/:category', getProductCategory);
+router.get('/bestseller', getBestsellerProducts );
+router.get('/category/:category',protectRoute, getProductCategory);
 router.get('/all',protectRoute, getAllProducts);
 // 🗑️ DELETE ROUTE
-router.delete('/remove/:id', protectRoute,deleteProduct);
+router.delete('/remove/:id', deleteProduct);
 
 // ⭐ REVIEW ROUTE
 router.post('/:id/reviews', protectRoute, addReview);

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
 const generateAccessToken = (userID) => {
-  return jwt.sign({ userID }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ userID }, `${process.env.ACCESS_TOKEN_SECRET}`, { expiresIn: '7d' });
 };
 
 const setAccessTokenCookie = (res, token, maxAge = 60 * 60 * 1000) => {
@@ -95,7 +95,8 @@ export const googleSignup = async (req, res) => {
 // ✅ ADMIN LOGIN (COOKIE BASED)
 export const adminLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+  
+    const {email, password}=req.body
 
     if (!email || !password)
       return res.status(400).json({ message: 'Email and password are required.' });
@@ -112,7 +113,7 @@ export const adminLogin = async (req, res) => {
     setAccessTokenCookie(res, token, 7 * 24 * 60 * 60 * 1000); // 7 days
 
     const { password: _, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ message: 'Admin logged in successfully.', user: userWithoutPassword });
+    res.status(200).json({ success:true,message: 'Admin logged in successfully.', user: userWithoutPassword });
   } catch (error) {
     console.error('Admin login error:', error);
     res.status(500).json({ message: 'Internal Server Error' });

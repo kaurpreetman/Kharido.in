@@ -3,44 +3,37 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Upload, Save, X, ArrowLeft } from 'lucide-react';
 
+// Category -> Subcategories Map
+const subCategoriesMap = {
+  Electronics: ['Mobiles', 'Laptops', 'Accessories'],
+  Fashion: ['Men', 'Women', 'Footwear'],
+  'Home & Living': ['Furniture', 'Kitchen', 'Lighting'],
+  Sports: ['Gym Equipment', 'Sportswear', 'Footwear'],
+  Beauty: ['Skincare', 'Makeup', 'Fragrances'],
+  Books: ['Fiction', 'Non-Fiction', 'Children’s Books'],
+};
+
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [images, setImages] = useState([null, null, null, null]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('Men');
-  const [subCategory, setSubCategory] = useState('Topwear');
+  const [category, setCategory] = useState('Electronics');
+  const [subCategory, setSubCategory] = useState(subCategoriesMap['Electronics'][0]);
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   // Mock product data
-  const mockProduct = {
-    _id: id,
-    name: 'Wireless Bluetooth Headphones',
-    description: 'High-quality wireless headphones with noise cancellation and premium sound quality',
-    price: 99.99,
-    category: 'Electronics',
-    subCategory: 'Audio',
-    bestseller: true,
-    sizes: ['S', 'M', 'L'],
-    image: [
-      'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=300',
-      null,
-      null,
-      null
-    ]
-  };
+
 
   const fetchProduct = async () => {
     try {
-      // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       setName(mockProduct.name);
       setDescription(mockProduct.description);
       setPrice(mockProduct.price.toString());
@@ -69,14 +62,18 @@ const EditProduct = () => {
     setImages(newImages);
   };
 
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    setCategory(selectedCategory);
+    setSubCategory(subCategoriesMap[selectedCategory][0]);
+  };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       toast.success('Product updated successfully!');
       navigate('/list');
     } catch (error) {
@@ -114,7 +111,7 @@ const EditProduct = () => {
             <h1 className="text-2xl font-bold text-white">Edit Product</h1>
           </div>
         </div>
-        
+
         <form onSubmit={onSubmitHandler} className="space-y-6">
           {/* Image Upload */}
           <div>
@@ -196,13 +193,14 @@ const EditProduct = () => {
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={handleCategoryChange}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="Men">Men</option>
-                <option value="Women">Women</option>
-                <option value="Kids">Kids</option>
-                <option value="Electronics">Electronics</option>
+                {Object.keys(subCategoriesMap).map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -215,10 +213,11 @@ const EditProduct = () => {
                 onChange={(e) => setSubCategory(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="Topwear">Topwear</option>
-                <option value="Bottomwear">Bottomwear</option>
-                <option value="Winterwear">Winterwear</option>
-                <option value="Audio">Audio</option>
+                {subCategoriesMap[category].map((subCat) => (
+                  <option key={subCat} value={subCat}>
+                    {subCat}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -241,7 +240,7 @@ const EditProduct = () => {
 
           {/* Sizes */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Available Sizes
             </label>
             <div className="flex flex-wrap gap-3">
@@ -249,11 +248,11 @@ const EditProduct = () => {
                 <button
                   key={size}
                   type="button"
-                  onClick={() => setSizes(prev => 
-                    prev.includes(size) 
-                      ? prev.filter(s => s !== size) 
-                      : [...prev, size]
-                  )}
+                  onClick={() =>
+                    setSizes((prev) =>
+                      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+                    )
+                  }
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                     sizes.includes(size)
                       ? 'bg-blue-500 text-white'

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { Loader, UserPlus } from 'lucide-react';
+import { Loader, UserPlus, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../context/userSlice';
@@ -21,6 +21,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -37,9 +38,9 @@ export function LoginPage() {
           { withCredentials: true }
         );
 
-        dispatch(setUser(res.data.user)); // ✅ Save to Redux
+        dispatch(setUser(res.data.user));
         toast.success('Logged in with Google!');
-        navigate(from); // ✅ Redirect
+        navigate(from);
       } catch (err) {
         console.error('Google login error:', err);
         toast.error(err.response?.data?.message || 'Google login failed');
@@ -84,101 +85,140 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-50 to-accent-50 dark:from-dark-900 dark:via-dark-800 dark:to-dark-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-pattern opacity-30"></div>
+      
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-full blur-3xl animate-float"></div>
+      <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-r from-accent-500/20 to-primary-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="Email address"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+      <div className="relative max-w-md w-full space-y-8">
+        <div className="card p-8 backdrop-blur-xl bg-white/80 dark:bg-dark-800/80">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Sparkles className="w-8 h-8 text-primary-600 dark:text-primary-400 animate-bounce-subtle" />
+              <h2 className="text-3xl font-display font-bold gradient-text">Welcome Back</h2>
             </div>
-            <div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Password"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-              />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            </div>
+            <p className="text-gray-600 dark:text-gray-400">
+              Sign in to your account to continue shopping
+            </p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center text-sm">
-              <input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" />
-              Remember me
-            </label>
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
-              Forgot your password?
-            </a>
-          </div>
+          <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+            {/* Email Field */}
+            <div className="space-y-2">
+            
+              <div className="relative">
+              
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="Enter your email"
+                  className={`input-field pl-12 ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                />
+              </div>
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+            </div>
 
-          <div>
+            {/* Password Field */}
+            <div className="space-y-2">
+             
+              <div className="relative">
+               
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                  className={`input-field pl-12 pr-12 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+            </div>
+
+            {/* Remember Me & Forgot Password */}
+            {/* <div className="flex items-center justify-between">
+              <label className="flex items-center text-sm">
+                <input type="checkbox" className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-2" />
+                <span className="text-gray-700 dark:text-gray-300">Remember me</span>
+              </label>
+              <a href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium">
+                Forgot password?
+              </a>
+            </div> */}
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+              className="btn-primary w-full justify-center gap-2 py-4"
             >
-              {loading ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <UserPlus className="h-5 w-5 mr-2" />}
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? (
+                <>
+                  <Loader className="animate-spin h-5 w-5" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-5 w-5" />
+                  Sign In
+                </>
+              )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="relative mt-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+          {/* Divider */}
+          <div className="relative mt-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-dark-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+            </div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-          </div>
+
+          {/* Google Login */}
+          <button
+            onClick={() => googleLogin()}
+            disabled={googleLoading}
+            className="w-full mt-6 py-4 flex items-center justify-center gap-3 border-2 border-gray-300 dark:border-dark-600 rounded-xl shadow-lg hover:shadow-xl bg-white dark:bg-dark-700 hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
+          >
+            <img
+              src="https://developers.google.com/identity/images/g-logo.png"
+              alt="Google"
+              className="w-6 h-6"
+            />
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              {googleLoading ? 'Signing in with Google...' : 'Sign in with Google'}
+            </span>
+          </button>
+
+          {/* Sign Up Link */}
+          <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+              Create one now
+            </Link>
+          </p>
         </div>
-
-        <button
-          onClick={() => googleLogin()}
-          disabled={googleLoading}
-          className="w-full py-2 flex items-center justify-center gap-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100 disabled:opacity-50"
-        >
-          <img
-            src="https://developers.google.com/identity/images/g-logo.png"
-            alt="Google"
-            className="w-5 h-5"
-          />
-          <span className="text-sm font-medium text-gray-700">
-            {googleLoading ? 'Signing in with Google...' : 'Sign in with Google'}
-          </span>
-        </button>
       </div>
     </div>
   );

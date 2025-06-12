@@ -2,79 +2,42 @@ import User from '../models/user.model.js';
 import Product from '../models/Product.model.js';
 import Order from '../models/order.model.js';
 
-export const getAnalyticsData = async (req, res) => {
-    try {
-        const totalUsers = await User.countDocuments();
-        const totalProducts = await Product.countDocuments();
+export const getAdminStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const pendingOrders = await Order.countDocuments({ status: 'Pending' });
 
-        const salesData = await Order.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    totalSales: { $sum: 1 },
-                    totalRevenue: { $sum: "$totalAmount" }
-                }
-            }
-        ]);
+    return res.status(200).json({
+      totalUsers,
+      totalProducts,
+      pendingOrders,
+      totalOrders,
 
-        const { totalSales, totalRevenue } = salesData[0] || { totalSales: 0, totalRevenue: 0 };
-
-        res.status(200).json({
-            users: totalUsers,
-            products: totalProducts,
-            totalSales,
-            totalRevenue
-        });
-    } catch (error) {
-        console.error("Error fetching analytics data:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
+    });
+  } catch (err) {
+    console.error('Error fetching admin stats:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Exclude passwords
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
 };
 
-export const getDailySalesData = async (startDate, endDate) => {
-    try {
-        const dailySalesData = await Order.aggregate([
-            {
-                $match: {
-                    createdAt: {
-                        $gte: new Date(startDate),
-                        $lte: new Date(endDate),
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    sales: { $sum: 1 },
-                    revenue: { $sum: "$totalAmount" }
-                }
-            },
-            { $sort: { _id: 1 } },
-        ]);
+export const deleteUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const dateArray = getDatesInRange(startDate, endDate);
-
-        return dateArray.map(date => {
-            const foundData = dailySalesData.find(item => item._id === date);
-            return {
-                date,
-                sales: foundData?.sales || 0,
-                revenue: foundData?.revenue || 0,
-            };
-        });
-    } catch (error) {
-        console.error("Error fetching daily sales data:", error);
-        return [];
-    }
+    await user.deleteOne();
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete user' });
+  }
 };
-
-function getDatesInRange(startDate, endDate) {
-    const dates = [];
-    let currentDate = new Date(startDate);
-
-    while (currentDate <= new Date(endDate)) {
-        dates.push(currentDate.toISOString().split("T")[0]);
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return dates;
-}

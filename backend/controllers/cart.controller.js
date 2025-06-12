@@ -1,13 +1,13 @@
-// controllers/cart.controller.js
 import Product from '../models/Product.model.js';
 
+// ✅ ADD TO CART
 export const addToCart = async (req, res) => {
   try {
     const user = req.user;
-    const { productId, size } = req.body;
+    const { productId, size = null } = req.body;
 
-    if (!productId || !size) {
-      return res.status(400).json({ message: "Product ID and size are required" });
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
     }
 
     const existingItem = user.cartItems.find(
@@ -28,6 +28,7 @@ export const addToCart = async (req, res) => {
   }
 };
 
+// ✅ GET CART PRODUCTS
 export const getCartProducts = async (req, res) => {
   try {
     const cartItems = await Promise.all(
@@ -50,10 +51,11 @@ export const getCartProducts = async (req, res) => {
   }
 };
 
+// ✅ UPDATE QUANTITY
 export const updateQuantity = async (req, res) => {
   try {
     const user = req.user;
-    const { productId, size, quantity } = req.body;
+    const { productId, size = null, quantity } = req.body;
 
     const item = user.cartItems.find(
       (item) => item.product.toString() === productId && item.size === size
@@ -79,41 +81,39 @@ export const updateQuantity = async (req, res) => {
   }
 };
 
+// ✅ REMOVE ONE
 export const removeone = async (req, res) => {
-    try {
-      const user = req.user;
-      const { productId, size } = req.body;
-        console.log(req.body);
-      if (!productId || !size) {
-        return res.status(400).json({ message: "Product ID and size are required" });
-      }
-  
-      // Filter out the item that matches productId AND size
-      const filteredCart = user.cartItems.filter(
-        (item) => !(item.product.toString() === productId && item.size === size)
-      );
-  
-      user.cartItems = filteredCart;
-    //   console.log("updated"+filteredCart);
-      await user.save();
-  
-      res.json({ success: true, cartItems: user.cartItems });
-    } catch (error) {
-      console.error("Error in removeOne:", error.message);
-      res.status(500).json({ message: "Server Error", error: error.message });
+  try {
+    const user = req.user;
+    const { productId, size = null } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
     }
-  };
-  export const clearCart = async (req, res) => {
-    try {
-      const user = req.user;
-  
-      user.cartItems = []; // 🔥 Empty the cart
-      await user.save();   // 💾 Save updated user
-  
-      res.json({ success: true, cartItems: [] });
-    } catch (error) {
-      console.error("Error in clearCart:", error.message);
-      res.status(500).json({ message: "Server Error", error: error.message });
-    }
-  };
-  
+
+    const filteredCart = user.cartItems.filter(
+      (item) => !(item.product.toString() === productId && item.size === size)
+    );
+
+    user.cartItems = filteredCart;
+
+    await user.save();
+    res.json({ success: true, cartItems: user.cartItems });
+  } catch (error) {
+    console.error("Error in removeOne:", error.message);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// ✅ CLEAR CART
+export const clearCart = async (req, res) => {
+  try {
+    const user = req.user;
+    user.cartItems = [];
+    await user.save();
+    res.json({ success: true, cartItems: [] });
+  } catch (error) {
+    console.error("Error in clearCart:", error.message);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};

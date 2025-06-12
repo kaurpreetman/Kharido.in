@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { fetchUserOrders } from "../context/orderSlice";
+import { User, Package, Calendar, Mail, Phone, MapPin, CreditCard, Truck, CheckCircle, XCircle, Clock, RotateCcw } from "lucide-react";
 
 export const ProfilePage = () => {
   const dispatch = useDispatch();
@@ -18,13 +19,43 @@ export const ProfilePage = () => {
   const getPaymentLabel = (method) => {
     switch (method) {
       case "cash_on_delivery":
-        return "💵 Cash on Delivery";
+        return { label: "Cash on Delivery", icon: Package, color: "text-green-600 dark:text-green-400" };
       case "stripe":
-        return "💳 Stripe";
+        return { label: "Stripe", icon: CreditCard, color: "text-blue-600 dark:text-blue-400" };
       case "razorpay":
-        return "🏦 Razorpay";
+        return { label: "Razorpay", icon: CreditCard, color: "text-purple-600 dark:text-purple-400" };
       default:
-        return "💰 Unknown";
+        return { label: "Unknown", icon: CreditCard, color: "text-gray-600 dark:text-gray-400" };
+    }
+  };
+
+  const getStatusConfig = (status) => {
+    switch (status) {
+      case "delivered":
+        return { 
+          color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800", 
+          icon: CheckCircle 
+        };
+      case "shipped":
+        return { 
+          color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
+          icon: Truck 
+        };
+      case "cancelled":
+        return { 
+          color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800", 
+          icon: XCircle 
+        };
+      case "returned":
+        return { 
+          color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800", 
+          icon: RotateCcw 
+        };
+      default:
+        return { 
+          color: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600", 
+          icon: Clock 
+        };
     }
   };
 
@@ -56,117 +87,244 @@ export const ProfilePage = () => {
       ? orders
       : orders.filter((order) => order.status.toLowerCase() === selectedTab);
 
-  const statusTabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled", "returned"];
+  const statusTabs = [
+    { id: "all", label: "All Orders", icon: Package },
+    { id: "pending", label: "Pending", icon: Clock },
+    { id: "processing", label: "Processing", icon: Clock },
+    { id: "shipped", label: "Shipped", icon: Truck },
+    { id: "delivered", label: "Delivered", icon: CheckCircle },
+    { id: "cancelled", label: "Cancelled", icon: XCircle },
+    { id: "returned", label: "Returned", icon: RotateCcw }
+  ];
 
   if (!user && !authLoading) {
     return (
-      <div className="text-center mt-20 text-lg text-gray-600">
-        Please login to view your orders.
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-900 flex items-center justify-center theme-transition">
+        <div className="card p-12 text-center max-w-md">
+          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Access Restricted</h2>
+          <p className="text-gray-600 dark:text-gray-400">Please login to view your profile and orders.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="mb-8 bg-gray-100 p-6 rounded shadow">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">👤 User Info</h2>
-        <p><strong>Name:</strong> {user?.name}</p>
-        <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>Joined:</strong> {new Date(user?.createdAt).toLocaleDateString()}</p>
-      </div>
-
-      <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">📦 My Orders</h1>
-
-      {/* Tabs for filtering */}
-      <div className="flex flex-wrap gap-3 justify-center mb-8">
-        {statusTabs.map((tab) => (
-          <button
-            key={tab}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-              selectedTab === tab
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            }`}
-            onClick={() => setSelectedTab(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {ordersLoading ? (
-        <p>Loading orders...</p>
-      ) : filteredOrders.length === 0 ? (
-        <p className="text-center text-gray-500">No orders found in this category 🫤</p>
-      ) : (
-        <div className="space-y-6">
-          {filteredOrders.map((order) => (
-            <div key={order._id} className="bg-white shadow-md rounded p-4">
-              <div className="mb-2 flex justify-between items-center">
-                <span className="font-semibold text-gray-700">Order ID: {order._id}</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    order.status === "delivered"
-                      ? "bg-green-100 text-green-700"
-                      : order.status === "shipped"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : order.status === "cancelled"
-                      ? "bg-red-100 text-red-600"
-                      : order.status === "returned"
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-
-              <div className="text-sm mb-2">
-                <strong>Total:</strong> ₹{order.totalAmount.toFixed(2)} |{" "}
-                <strong>Payment:</strong> {getPaymentLabel(order.paymentMethod)}
-              </div>
-
-              <div className="space-y-2 text-sm">
-                {order.products.map((item, idx) => (
-                  <div key={idx} className="flex justify-between">
-                    <span>
-                      {item?.product?.name || "Unknown Product"} (x{item.quantity})
-                    </span>
-                    <span>₹{item?.price?.toFixed(2) || "0.00"}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex gap-3 flex-wrap">
-                {/* Return option */}
-                {order.status === "delivered" &&
-                  order.deliveredAt &&
-                  !order.isReturned &&
-                  daysBetween(new Date(), new Date(order.deliveredAt)) <= 7 && (
-                    <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
-                      onClick={() => handleCancelOrReturn(order._id, "return")}
-                      disabled={processingOrderId === order._id}
-                    >
-                      {processingOrderId === order._id ? "Processing..." : "Return"}
-                    </button>
-                  )}
-
-                {/* Cancel option */}
-                {["pending", "shipped"].includes(order.status) && !order.isCancelled && (
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
-                    onClick={() => handleCancelOrReturn(order._id, "cancel")}
-                    disabled={processingOrderId === order._id}
-                  >
-                    {processingOrderId === order._id ? "Processing..." : "Cancel"}
-                  </button>
-                )}
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 theme-transition">
+      <div className="container mx-auto py-8 px-4">
+        {/* User Info Card */}
+        <div className="card p-8 mb-8">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-20 h-20 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <User className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold gradient-text mb-2">Welcome back, {user?.name}!</h1>
+              <p className="text-gray-600 dark:text-gray-400">Manage your orders and account settings</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+              <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{user?.email}</p>
               </div>
             </div>
-          ))}
+            
+            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+              <Calendar className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Member Since</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
+                  {new Date(user?.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+              <Package className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{orders.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Orders Section */}
+        <div className="card p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <Package className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+            <h2 className="text-3xl font-bold gradient-text">My Orders</h2>
+          </div>
+
+          {/* Status Tabs */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            {statusTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    selectedTab === tab.id
+                      ? "bg-gradient-to-r from-primary-600 to-secondary-600 text-white shadow-lg"
+                      : "bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600"
+                  }`}
+                  onClick={() => setSelectedTab(tab.id)}
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Orders List */}
+          {ordersLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="text-center">
+                <div className="spinner mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Loading orders...</p>
+              </div>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-20">
+              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                No orders found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {selectedTab === "all" ? "You haven't placed any orders yet." : `No ${selectedTab} orders found.`}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filteredOrders.map((order) => {
+                const statusConfig = getStatusConfig(order.status);
+                const paymentConfig = getPaymentLabel(order.paymentMethod);
+                const StatusIcon = statusConfig.icon;
+                const PaymentIcon = paymentConfig.icon;
+
+                return (
+                  <div key={order._id} className="card p-6 hover:shadow-xl transition-all duration-300">
+                    {/* Order Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+                      <div>
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                          Order #{order._id.slice(-8)}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Placed on {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                        <StatusIcon className="w-4 h-4" />
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color}`}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Order Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">
+                            ₹{order.totalAmount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <PaymentIcon className={`w-4 h-4 ${paymentConfig.color}`} />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Payment:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {paymentConfig.label}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {order.address && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5" />
+                          <div className="text-sm">
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">Delivery Address:</p>
+                            <p className="text-gray-900 dark:text-gray-100">
+                              {order.address.street}, {order.address.city}<br />
+                              {order.address.state}, {order.address.zipCode}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="space-y-3 mb-6">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">Order Items:</h4>
+                      {order.products.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-700 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            {item?.product?.image && (
+                              <img 
+                                src={item.product.image[0]} 
+                                alt={item?.product?.name || "Product"}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-gray-100">
+                                {item?.product?.name || "Unknown Product"}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Quantity: {item.quantity} {item.size!="null" && `• Size: ${item.size}`}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">
+                            ₹{item?.price?.toFixed(2) || "0.00"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 flex-wrap">
+                      {/* Return option */}
+                      {order.status === "delivered" &&
+                        order.deliveredAt &&
+                        !order.isReturned &&
+                        daysBetween(new Date(), new Date(order.deliveredAt)) <= 7 && (
+                          <button
+                            className="btn-secondary gap-2"
+                            onClick={() => handleCancelOrReturn(order._id, "return")}
+                            disabled={processingOrderId === order._id}
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            {processingOrderId === order._id ? "Processing..." : "Return Order"}
+                          </button>
+                        )}
+
+                      {/* Cancel option */}
+                      {["pending", "shipped"].includes(order.status) && !order.isCancelled && (
+                        <button
+                          className="btn-danger gap-2"
+                          onClick={() => handleCancelOrReturn(order._id, "cancel")}
+                          disabled={processingOrderId === order._id}
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {processingOrderId === order._id ? "Processing..." : "Cancel Order"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -4,66 +4,84 @@ import cloudinary from '../lib/cloudinary.js';
 import Order from '../models/order.model.js'
 
 export const createProduct = async (req, res) => {
-    try {
-   
+  try {
+    const {
+      name,
+      description,
+      price,
+      category,
+      subCategory,
+      sizes,
+      bestseller,
+    } = req.body;
 
+    if (!name || !price) {
+      return res.status(400).json({ message: 'Name and price are required.' });
+    }
 
-      const { name, description, price, category, subCategory, sizes, bestseller, date } = req.body;
-  
-      if (!name || !price) {
-        return res.status(400).json({ message: "Name, price are required." });
+    const imageUrls = [];
+
+    const uploadImageToCloudinary = (fileBuffer) => {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(fileBuffer);
+      });
+    };
+
+    const imageKeys = ['image1', 'image2', 'image3', 'image4'];
+    for (const key of imageKeys) {
+      if (req.files && req.files[key] && req.files[key][0]) {
+        const fileBuffer = req.files[key][0].buffer;
+        const result = await uploadImageToCloudinary(fileBuffer);
+        imageUrls.push(result.secure_url);
       }
-  
-      const imageUrls = [];
-      const uploadImageToCloudinary = (fileBuffer) => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      { folder: "products" },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
+    }
+
+    // Safely parse sizes
+    let parsedSizes = [];
+    if (sizes) {
+      try {
+        const temp = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+        if (Array.isArray(temp)) parsedSizes = temp;
+      } catch (err) {
+        console.warn('Invalid sizes format:', sizes);
+        // optional: return an error or default to empty
       }
-    ).end(fileBuffer);
-  });
+    }
+
+    const newProduct = new Product({
+      name,
+      description,
+      price: Number(price),
+      category,
+      subCategory,
+      sizes: parsedSizes,
+      bestseller: bestseller === 'true',
+      date: Date.now(),
+      image: imageUrls,
+    });
+
+    const savedProduct = await newProduct.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Product created successfully.',
+      product: savedProduct,
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
  
 
 
-      const imageKeys = ['image1', 'image2', 'image3', 'image4'];
-for (const key of imageKeys) {
-  if (req.files && req.files[key] && req.files[key][0]) {
-    const fileBuffer = req.files[key][0].buffer;
-    const result = await uploadImageToCloudinary(fileBuffer);
-    imageUrls.push(result.secure_url);
-  }
-}
 
-
-
-      const newProduct = new Product({
-        name,
-        description,
-        price:Number(price),
-        category,
-        subCategory,
-        sizes:JSON.parse(sizes),
-        bestseller: bestseller==="true"? true:false,
-        date:Date.now(),
-        image: imageUrls,
-      });
-  
-      const savedProduct = await newProduct.save();
-  
-      res.status(201).json({
-        success:true,
-        message: "Product created successfully.",
-        product: savedProduct,
-      });
-    } catch (error) {
-      console.error("Error creating product:", error);
-      res.status(500).json({ message: "Internal Server Error" });
-    }
-  };
   
 
 
