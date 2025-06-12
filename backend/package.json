@@ -12,7 +12,9 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
+    "@babel/runtime": "^7.27.6",
     "@stripe/stripe-js": "^5.10.0",
+    "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
@@ -26,6 +28,7 @@
     "mongoose": "^8.9.2",
     "multer": "^2.0.1",
     "razorpay": "^2.9.5",
+    "react-router": "^7.6.2",
     "redis": "^4.7.0",
     "stripe": "^17.5.0",
     "validator": "^13.12.0"
