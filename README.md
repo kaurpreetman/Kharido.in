@@ -1,7 +1,7 @@
 
-# 🛍️ Forever - E-commerce Web Application
+# 🛍️Kharido.in - E-commerce Web Application
 
-Forever is a full-stack e-commerce platform named **Kharido.in**, offering premium shopping experiences with multiple product categories, order tracking, secure payment methods, and a dedicated admin dashboard for complete store management.
+Kharido.in is a full-stack e-commerce platform named **Kharido.in**, offering premium shopping experiences with multiple product categories, order tracking, secure payment methods, and a dedicated admin dashboard for complete store management.
 
 ---
 
