@@ -98,10 +98,7 @@ To run this project, you need to set up environment variables in all three folde
 ```
 PORT=5000
 MONGO_URI=your-mongodb-uri
-UPSTASH_REDIS_URL=your-upstash-redis-url
 ACCESS_TOKEN_SECRET=your-access-token-secret
-REFRESH_TOKEN_SECRET=your-refresh-token-secret
-NODE_ENV=development
 CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
 CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret
@@ -109,8 +106,6 @@ STRIPE_SECRET_KEY=your-stripe-secret-key
 RAZORPAY_KEY_SECRET=your-razorpay-secret-key
 CLIENT_URL=http://localhost:5173
 SERVER_URL=http://localhost:5000
-ADMIN_EMAIL=your-admin-email
-ADMIN_PASSWORD=your-admin-password
 VITE_CLIENT_ID=your-google-client-id
 CLIENT_SECRET=your-google-client-secret
 ```
